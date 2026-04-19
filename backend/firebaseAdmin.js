@@ -4,9 +4,19 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const serviceAccount = JSON.parse(
-  fs.readFileSync(process.env.GOOGLE_SERVICE_ACCOUNT_FILE, 'utf8')
-);
+let serviceAccount;
+try {
+  const filePath = process.env.GOOGLE_SERVICE_ACCOUNT_FILE;
+  if (!filePath) throw new Error('GOOGLE_SERVICE_ACCOUNT_FILE environment variable is not set');
+  
+  serviceAccount = JSON.parse(
+    fs.readFileSync(filePath, 'utf8')
+  );
+  console.log('✅ Firebase Service Account loaded successfully');
+} catch (error) {
+  console.error('❌ FATAL: Could not load Firebase Service Account:', error.message);
+  process.exit(1);
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
