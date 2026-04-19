@@ -23,8 +23,14 @@
   -webkit-font-smoothing: antialiased;
 }
 
-body { min-height: 100vh; }
-#root { width: 100%; }
+body { 
+  min-height: 100vh;
+  overflow-x: hidden; 
+}
+#root { 
+  width: 100%;
+  overflow-x: hidden;
+}
 img { max-width: 100%; }
 input, select, button { font-family: inherit; }
 
@@ -112,6 +118,8 @@ input, select, button { font-family: inherit; }
   padding: 16px;
   min-height: 100vh;
   width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
 }
 
 /* ─── NAV LINK ───────────────────────────────────── */
@@ -235,6 +243,7 @@ input, select, button { font-family: inherit; }
 
   .main-content {
     margin-left: var(--sidebar-w);
+    width: calc(100% - var(--sidebar-w));
     padding: 30px 32px;
   }
 

@@ -4,7 +4,9 @@ import { useSelector } from 'react-redux';
 import { selectUser } from '../../redux/features/authSlice';
 import { selectCartItems } from '../../redux/features/cartSlice';
 import api from '../../services/api';
-import { ShoppingBag, ShoppingCart, ClipboardList, Package, TrendingUp, Clock } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, ClipboardList, Package, TrendingUp, Clock, FileText } from 'lucide-react';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import OrderPDF from '../../components/pdf/OrderPDF';
 import { toast } from 'react-toastify';
 
 const StatCard = ({ icon, label, value, color, onClick }) => (
@@ -153,17 +155,34 @@ const Dashboard = () => {
                     {order.ID_Pedido} · {order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO') : ''}
                   </p>
                 </div>
-                <span style={{
-                  padding: '4px 10px',
-                  borderRadius: '20px',
-                  fontSize: '0.72rem',
-                  fontWeight: '600',
-                  background: `${statusColor[order.Estado] || '#64748b'}20`,
-                  color: statusColor[order.Estado] || '#64748b',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {order.Estado}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                  <span style={{
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    fontSize: '0.72rem',
+                    fontWeight: '600',
+                    background: `${statusColor[order.Estado] || '#64748b'}20`,
+                    color: statusColor[order.Estado] || '#64748b',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {order.Estado}
+                  </span>
+
+                  <PDFDownloadLink
+                    document={<OrderPDF order={{ ...order, items: orders.filter(x => x.ID_Pedido === order.ID_Pedido) }} />}
+                    fileName={`Pedido_${order.ID_Pedido}.pdf`}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    {({ loading }) => (
+                      <button style={{ 
+                        background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)',
+                        padding: '4px 8px', borderRadius: '6px', color: '#818cf8', cursor: 'pointer'
+                      }}>
+                        <FileText size={14} />
+                      </button>
+                    )}
+                  </PDFDownloadLink>
+                </div>
               </div>
             ))}
           </div>

@@ -171,99 +171,111 @@ const styles = StyleSheet.create({
 });
 
 const OrderPDF = ({ order }) => {
-  const date = order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO', {
-    year: 'numeric', month: 'long', day: 'numeric'
-  }) : 'Sin fecha';
+  try {
+    if (!order) return null;
 
-  const totalVal = order.items.reduce((s, i) => s + (parseFloat(i.Total_Item) || 0), 0);
+    const items = order.items || [];
+    const date = order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    }) : 'Sin fecha';
 
-  return (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.logo}>BONETTO</Text>
-            <Text style={{ fontSize: 10, color: '#64748b' }}>con Amor</Text>
-          </View>
-          <View style={styles.orderInfo}>
-            <Text style={styles.title}>PEDIDO #{String(order.ID_Pedido).slice(-6).toUpperCase()}</Text>
-            <Text style={styles.subtitle}>{date}</Text>
-            <Text style={styles.subtitle}>Estado: {order.Estado}</Text>
-          </View>
-        </View>
+    const totalVal = items.reduce((s, i) => s + (parseFloat(i.Total_Item) || 0), 0);
 
-        {/* Customer Info */}
-        <View style={styles.customerSection}>
-          <View style={{ marginBottom: 10 }}>
-            <Text style={styles.customerLabel}>CLIENTE</Text>
-            <Text style={styles.customerValue}>{order.Nombre_Cliente}</Text>
-          </View>
-          <View>
-            <Text style={styles.customerLabel}>ASESOR COMERCIAL</Text>
-            <Text style={styles.customerValue}>{order.Asesor || 'N/A'}</Text>
-          </View>
-        </View>
-
-        {/* Products Table */}
-        <Text style={styles.sectionTitle}>Detalle del Pedido</Text>
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <View style={styles.colImg}><Text style={styles.headerText}>Imagen</Text></View>
-            <View style={styles.colDesc}><Text style={styles.headerText}>Producto</Text></View>
-            <View style={styles.colQty}><Text style={styles.headerText}>Cant.</Text></View>
-            <View style={styles.colPrice}><Text style={styles.headerText}>Subtotal</Text></View>
-          </View>
-
-          {order.items.map((item, index) => (
-            <View key={index} style={styles.tableRow}>
-              <View style={styles.colImg}>
-                {item.Imagen_URL ? (
-                  <Image src={item.Imagen_URL} style={styles.productImg} />
-                ) : (
-                  <View style={[styles.productImg, { backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center' }]}>
-                    <Text style={{ fontSize: 8, color: '#94a3b8' }}>Sin foto</Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.colDesc}>
-                <Text style={styles.productName}>{item.Nombre_Producto}</Text>
-                <Text style={styles.productSku}>SKU: {item.SKU}</Text>
-              </View>
-              <View style={styles.colQty}>
-                <Text style={styles.cellText}>{item.Cantidad}</Text>
-              </View>
-              <View style={styles.colPrice}>
-                <Text style={styles.cellText}>
-                  ${parseFloat(item.Total_Item || 0).toLocaleString('es-CO')}
-                </Text>
-              </View>
+    return (
+      <Document title={`Pedido_${order.ID_Pedido || 'S_N'}`}>
+        <Page size="A4" style={styles.page}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.logo}>BONETTO</Text>
+              <Text style={{ fontSize: 10, color: '#64748b' }}>con Amor</Text>
             </View>
-          ))}
-        </View>
-
-        {/* Totals */}
-        <View style={styles.totalSection}>
-          <Text style={styles.totalLabel}>VALOR TOTAL</Text>
-          <Text style={styles.totalValue}>${totalVal.toLocaleString('es-CO')}</Text>
-        </View>
-
-        {/* Notes */}
-        {order.Notas && (
-          <View style={styles.noteSection}>
-            <Text style={styles.noteTitle}>OBSERVACIONES</Text>
-            <Text style={styles.noteText}>{order.Notas}</Text>
+            <View style={styles.orderInfo}>
+              <Text style={styles.title}>PEDIDO #{String(order.ID_Pedido || 'S/N').slice(-8).toUpperCase()}</Text>
+              <Text style={styles.subtitle}>{date}</Text>
+              <Text style={styles.subtitle}>Estado: {order.Estado || 'Pendiente'}</Text>
+            </View>
           </View>
-        )}
 
-        {/* Footer */}
-        <Text style={styles.footer}>
-          Este documento es un comprobante de pedido generado desde la App Bonetto. 
-          Bonetto con Amor - Todos los derechos reservados © {new Date().getFullYear()}
-        </Text>
-      </Page>
-    </Document>
-  );
+          {/* Customer Info */}
+          <View style={styles.customerSection}>
+            <View style={{ marginBottom: 10 }}>
+              <Text style={styles.customerLabel}>CLIENTE</Text>
+              <Text style={styles.customerValue}>{order.Nombre_Cliente || 'No especificado'}</Text>
+            </View>
+            <View>
+              <Text style={styles.customerLabel}>ASESOR COMERCIAL</Text>
+              <Text style={styles.customerValue}>{order.Asesor || 'N/A'}</Text>
+            </View>
+          </View>
+
+          {/* Products Table */}
+          <Text style={styles.sectionTitle}>Detalle del Pedido</Text>
+          <View style={styles.table}>
+            <View style={styles.tableHeader}>
+              <View style={styles.colImg}><Text style={styles.headerText}>Imagen</Text></View>
+              <View style={styles.colDesc}><Text style={styles.headerText}>Producto</Text></View>
+              <View style={styles.colQty}><Text style={styles.headerText}>Cant.</Text></View>
+              <View style={styles.colPrice}><Text style={styles.headerText}>Subtotal</Text></View>
+            </View>
+
+            {items.map((item, index) => (
+              <View key={index} style={styles.tableRow}>
+                <View style={styles.colImg}>
+                  {item.Imagen_URL ? (
+                    <Image src={item.Imagen_URL} style={styles.productImg} />
+                  ) : (
+                    <View style={[styles.productImg, { backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center' }]}>
+                      <Text style={{ fontSize: 8, color: '#94a3b8' }}>Sin foto</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.colDesc}>
+                  <Text style={styles.productName}>{item.Nombre_Producto || 'Producto sin nombre'}</Text>
+                  <Text style={styles.productSku}>SKU: {item.SKU || 'N/A'}</Text>
+                </View>
+                <View style={styles.colQty}>
+                  <Text style={styles.cellText}>{item.Cantidad || 0}</Text>
+                </View>
+                <View style={styles.colPrice}>
+                  <Text style={styles.cellText}>
+                    ${parseFloat(item.Total_Item || 0).toLocaleString('es-CO')}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          {/* Totals */}
+          <View style={styles.totalSection}>
+            <Text style={styles.totalLabel}>VALOR TOTAL</Text>
+            <Text style={styles.totalValue}>${totalVal.toLocaleString('es-CO')}</Text>
+          </View>
+
+          {/* Notes */}
+          {(order.Notas || order.Notas_Pedido) && (
+            <View style={styles.noteSection}>
+              <Text style={styles.noteTitle}>OBSERVACIONES</Text>
+              <Text style={styles.noteText}>{order.Notas || order.Notas_Pedido}</Text>
+            </View>
+          )}
+
+          {/* Footer */}
+          <Text style={styles.footer}>
+            Este documento es un comprobante de pedido generado desde la App Bonetto. 
+            Bonetto con Amor - Todos los derechos reservados © {new Date().getFullYear()}
+          </Text>
+        </Page>
+      </Document>
+    );
+  } catch (error) {
+    console.error("PDF Render Error:", error);
+    return (
+      <Document>
+        <Page size="A4"><Text>Error al generar PDF: {error.message}</Text></Page>
+      </Document>
+    );
+  }
 };
 
 export default OrderPDF;
