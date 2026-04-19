@@ -18,17 +18,19 @@ export const createOrder = asyncHandler(async (req, res) => {
     note 
   } = req.body;
 
+  // Fallback to authenticated user email if frontend didn't send it
+  const finalEmail = userEmail || req.user.email;
+
   if (!items || items.length === 0) {
     res.status(400);
     throw new Error('No items in order');
   }
 
-  // Each item becomes a row in the "Pedidos" sheet
   for (const item of items) {
     const row = [
       orderId,
       date,
-      userEmail,
+      finalEmail, // Column C
       clientId,
       clientName,
       item.sku,
@@ -64,7 +66,13 @@ export const getOrders = asyncHandler(async (req, res) => {
     return res.json(orders);
   }
 
-  // Sales users only see their own orders
-  const filtered = orders.filter(o => o.Asesor === email || o.Email_Asesor === email);
+  // Flexibly check for email in multiple possible header names
+  const filtered = orders.filter(o => 
+    (o.Email_Asesor && o.Email_Asesor.toLowerCase() === email.toLowerCase()) || 
+    (o.Asesor && o.Asesor.toLowerCase() === email.toLowerCase()) ||
+    (o.userEmail && o.userEmail.toLowerCase() === email.toLowerCase()) ||
+    (o.email && o.email.toLowerCase() === email.toLowerCase())
+  );
+  
   res.json(filtered);
 });

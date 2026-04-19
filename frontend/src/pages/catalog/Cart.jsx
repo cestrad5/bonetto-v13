@@ -14,6 +14,7 @@ import api from '../../services/api';
 import { toast } from 'react-toastify';
 
 const Cart = () => {
+  const user = useSelector(state => state.auth.user);
   const cartItems = useSelector(selectCartItems);
   const selectedClient = useSelector(selectSelectedClient);
   const totalAmount = useSelector(selectTotalAmount);
@@ -36,9 +37,16 @@ const Cart = () => {
       const orderData = {
         orderId: `BN-${Date.now()}`,
         date: new Date().toISOString(),
+        userEmail: user?.email, // Añadido aquí
         clientId: selectedClient.ID,
         clientName: selectedClient.Nombre,
-        items: cartItems,
+        items: cartItems.map(i => ({
+          ...i,
+          sku: i.SKU,
+          name: i.Nombre,
+          priceList: i.priceIVA,
+          subtotal: i.priceFinal * i.qty
+        })),
         totalOrder: totalAmount,
         note: note
       };
