@@ -19,9 +19,8 @@ import Layout from './components/layout/Layout'
 import Login from './pages/auth/Login'
 import Catalog from './pages/catalog/Catalog'
 import Cart from './pages/catalog/Cart'
-
-const Dashboard = () => <div className="glass-card"><h1>Panel de Control</h1><p>Bienvenido al sistema v13.</p></div>
-const Orders = () => <div className="glass-card"><h1>Mis Pedidos</h1><p>Aquí aparecerá el historial.</p></div>
+import Dashboard from './pages/dashboard/Dashboard'
+import Orders from './pages/orders/Orders'
 
 function App() {
   const dispatch = useDispatch()

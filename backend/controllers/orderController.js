@@ -50,16 +50,21 @@ export const createOrder = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Get all orders (or filtered by user)
+ * @desc    Get all orders (Admin sees all; Sales sees only their own)
  * @route   GET /api/orders
  * @access  Private
  */
 export const getOrders = asyncHandler(async (req, res) => {
   const rows = await getSheetData('Pedidos!A:O');
   const orders = mapRowsToObjects(rows);
-  
-  // If user is not admin/production, filter by their email
-  // (Logic to be refined after auth implementation)
-  
-  res.json(orders);
+
+  const { role, email } = req.user;
+
+  if (role === 'Admin' || role === 'Produccion') {
+    return res.json(orders);
+  }
+
+  // Sales users only see their own orders
+  const filtered = orders.filter(o => o.Asesor === email || o.Email_Asesor === email);
+  res.json(filtered);
 });
