@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
-import { RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import OrderPDF from '../../components/pdf/OrderPDF';
 import { toast } from 'react-toastify';
 
 const STATUS_COLOR = {
@@ -36,13 +38,12 @@ const OrderRow = ({ order }) => {
     }}>
       {/* Header row */}
       <div
-        onClick={() => setOpen(!open)}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 18px', cursor: 'pointer', flexWrap: 'wrap', gap: '8px',
+          padding: '14px 18px', flexWrap: 'wrap', gap: '8px',
         }}
       >
-        <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} onClick={() => setOpen(!open)}>
           <p style={{ margin: 0, fontWeight: '700', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {order.Nombre_Cliente}
           </p>
@@ -55,7 +56,37 @@ const OrderRow = ({ order }) => {
             ${total.toLocaleString('es-CO')}
           </span>
           <Badge status={order.Estado} />
-          {open ? <ChevronUp size={16} color="#64748b" /> : <ChevronDown size={16} color="#64748b" />}
+          
+          <PDFDownloadLink
+            document={<OrderPDF order={order} />}
+            fileName={`Pedido_${order.ID_Pedido}.pdf`}
+            style={{ textDecoration: 'none' }}
+          >
+            {({ loading }) => (
+              <button
+                style={{ 
+                  padding: '4px 10px', 
+                  fontSize: '0.72rem', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px',
+                  background: 'rgba(99, 102, 241, 0.1)',
+                  border: '1px solid rgba(99, 102, 241, 0.2)',
+                  color: '#818cf8',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+                disabled={loading}
+              >
+                <FileText size={14} />
+                {loading ? '...' : 'PDF'}
+              </button>
+            )}
+          </PDFDownloadLink>
+
+          <div onClick={() => setOpen(!open)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            {open ? <ChevronUp size={16} color="#64748b" /> : <ChevronDown size={16} color="#64748b" />}
+          </div>
         </div>
       </div>
 

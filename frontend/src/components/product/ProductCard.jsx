@@ -142,12 +142,22 @@ const ProductCard = ({ product, discountPct = 0 }) => {
             >
               <Minus size={15} />
             </button>
-            <span style={{
-              minWidth: '32px', textAlign: 'center',
-              fontWeight: '700', fontSize: '0.95rem',
-            }}>
-              {qty}
-            </span>
+            <input
+              type="number"
+              value={qty}
+              onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
+              style={{
+                width: '50px',
+                height: '38px',
+                background: 'transparent',
+                border: 'none',
+                color: 'white',
+                textAlign: 'center',
+                fontWeight: '700',
+                fontSize: '0.95rem',
+                outline: 'none',
+              }}
+            />
             <button
               onClick={() => handleQty(1)}
               style={{
