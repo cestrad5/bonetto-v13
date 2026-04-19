@@ -58,8 +58,17 @@ const Login = () => {
         style={{ width: '100%', maxWidth: '400px', textAlign: 'center' }}
       >
         <div style={{ marginBottom: '2rem' }}>
-          <img src="https://bonettoconamor.com/wp-content/uploads/2023/05/Logo-Bonetto-con-Amor-Vertical-Negro.png" alt="Logo" style={{ width: '120px', filter: 'invert(1)' }} />
-          <h2 style={{ marginTop: '1rem', fontWeight: '300' }}>Ventas v13</h2>
+          <div style={{ 
+            fontSize: '1.8rem', 
+            fontWeight: '800', 
+            background: 'linear-gradient(135deg, #6366f1, #a855f7)', 
+            WebkitBackgroundClip: 'text', 
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '-1px'
+          }}>
+            🎀 Bonetto
+          </div>
+          <h2 style={{ marginTop: '0.5rem', fontWeight: '300', fontSize: '1rem', color: '#94a3b8' }}>Ventas v13 — Portal de Pedidos</h2>
         </div>
 
         <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
