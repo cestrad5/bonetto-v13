@@ -36,6 +36,7 @@ input, select, button { font-family: inherit; }
 /* ─── GLASS CARD ────────────────────────────────── */
 .glass-card {
   background: var(--bg-card);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -55,6 +56,7 @@ input, select, button { font-family: inherit; }
   width: var(--sidebar-w);
   height: 100vh;
   background: var(--bg-side);
+  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   border-right: 1px solid var(--border);
   display: flex;
@@ -74,6 +76,7 @@ input, select, button { font-family: inherit; }
   inset: 0;
   background: rgba(0,0,0,0.6);
   z-index: 199;
+  -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
 }
 .sidebar-overlay.show { display: block; }
