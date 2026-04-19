@@ -22,12 +22,13 @@ jobs:
           command_timeout: 10m
           script: |
             set -e
+            export PATH=$PATH:/usr/bin:/usr/local/bin
             cd /opt/bonetto-v13
             echo "📥 Pulling latest code..."
             git pull origin main
             echo "🐳 Rebuilding containers..."
-            docker compose down --remove-orphans
-            docker compose up -d --build
+            sudo docker compose down --remove-orphans
+            sudo docker compose up -d --build
             echo "🧹 Cleaning up old images..."
-            docker image prune -f
+            sudo docker image prune -f
             echo "✅ Deploy complete! $(date)"
