@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build output
+frontend/dist/
+
+# Environment variables (NEVER commit these)
+.env
+**/.env
+backend/.env
+
+# Google Service Account Key (NEVER commit this)
+backend/service-account.json
+
+# Logs
+*.log
+backend/backend.log
+frontend/frontend.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
