@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import api from '../../services/api';
 import ProductCard from '../../components/product/ProductCard';
 import { SET_CLIENT, selectSelectedClient } from '../../redux/features/cartSlice';
-import { Search, Filter, User } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const Catalog = () => {
@@ -46,83 +45,70 @@ const Catalog = () => {
   };
 
   return (
-    <div className="catalog-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <h1 style={{ margin: 0, fontSize: '2.5rem' }}>Catálogo</h1>
-        
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-          <div style={{ position: 'relative' }}>
-            <User style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} size={18} />
-            <select 
-              value={selectedClient?.ID || ''}
-              onChange={handleClientChange}
-              style={{ 
-                padding: '12px 12px 12px 40px', 
-                borderRadius: '12px', 
-                background: '#1e293b', 
-                color: 'white', 
-                border: '1px solid #334155',
-                cursor: 'pointer',
-                minWidth: '200px'
-              }}
-            >
-              <option value="">Seleccionar Cliente (PV)</option>
-              {clients.map(c => (
-                <option key={c.ID} value={c.ID}>{c.Nombre} ({c.Descuento_Pct}%)</option>
-              ))}
-            </select>
-          </div>
-        </div>
+    <div>
+      {/* Header */}
+      <div style={{ marginBottom: '20px' }}>
+        <h1 style={{ fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', fontWeight: '800', margin: 0 }}>Catálogo</h1>
+        <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '4px' }}>
+          {filteredProducts.length} productos{selectedClient ? ` · ${selectedClient.Nombre} (${selectedClient.Descuento_Pct}% desc.)` : ''}
+        </p>
       </div>
 
-      <div style={{ position: 'relative', marginBottom: '40px' }}>
-        <Search style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} size={22} />
-        <input 
-          type="text" 
-          placeholder="Buscar por nombre, SKU o categoría..." 
+      {/* Client selector */}
+      <div style={{ marginBottom: '14px' }}>
+        <select
+          value={selectedClient?.ID || ''}
+          onChange={handleClientChange}
+          className="input-field"
+          style={{ background: 'rgba(30,41,59,0.7)' }}
+        >
+          <option value="">👤 Seleccionar cliente (precio de lista)</option>
+          {clients.map(c => (
+            <option key={c.ID} value={c.ID}>{c.Nombre} — {c.Descuento_Pct}% dcto.</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Search */}
+      <div style={{ position: 'relative', marginBottom: '24px' }}>
+        <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }}>
+          🔍
+        </span>
+        <input
+          type="text"
+          placeholder="Buscar por nombre, SKU o categoría..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ 
-            width: '100%', 
-            padding: '18px 18px 18px 50px', 
-            borderRadius: '16px', 
-            background: 'rgba(30, 41, 59, 0.5)', 
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: 'white',
-            fontSize: '1.1rem'
-          }}
+          className="input-field"
+          style={{ paddingLeft: '42px' }}
         />
       </div>
 
+      {/* Grid */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '100px' }}>
-          <div className="spinner"></div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>
+          <p style={{ fontSize: '1.5rem' }}>⏳</p>
           <p>Cargando catálogo...</p>
         </div>
+      ) : filteredProducts.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>
+          <p style={{ fontSize: '2rem' }}>📦</p>
+          <p>Sin resultados para "<strong>{searchTerm}</strong>"</p>
+        </div>
       ) : (
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
-          gap: '25px' 
-        }}>
+        <div className="catalog-grid">
           {filteredProducts.map(product => (
-            <ProductCard 
-              key={product.SKU} 
-              product={product} 
-              discountPct={selectedClient ? parseFloat(selectedClient.Descuento_Pct) : 0}
+            <ProductCard
+              key={product.SKU}
+              product={product}
+              discountPct={selectedClient ? parseFloat(selectedClient.Descuento_Pct) || 0 : 0}
             />
           ))}
         </div>
       )}
-
-      {!loading && filteredProducts.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '100px', color: '#64748b' }}>
-          <p>No se encontraron productos que coincidan con la búsqueda.</p>
-        </div>
-      )}
     </div>
   );
+
 };
 
 export default Catalog;

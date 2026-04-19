@@ -11,14 +11,16 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     ADD_TO_CART: (state, action) => {
-      const itemIndex = state.cartItems.findIndex(item => item.SKU === action.payload.SKU);
+      const { qty = 1, ...payload } = action.payload;
+      const itemIndex = state.cartItems.findIndex(item => item.SKU === payload.SKU);
       if (itemIndex >= 0) {
-        state.cartItems[itemIndex].qty += 1;
+        state.cartItems[itemIndex].qty += qty;
       } else {
-        const tempProduct = { ...action.payload, qty: 1 };
-        state.cartItems.push(tempProduct);
+        state.cartItems.push({ ...payload, qty });
       }
-      state.totalAmount = state.cartItems.reduce((total, item) => total + (item.priceFinal * item.qty), 0);
+      state.totalAmount = state.cartItems.reduce(
+        (total, item) => total + item.priceFinal * item.qty, 0
+      );
     },
     REMOVE_FROM_CART: (state, action) => {
       state.cartItems = state.cartItems.filter(item => item.SKU !== action.payload.SKU);
