@@ -58,7 +58,15 @@ const OrderRow = ({ order }) => {
           <Badge status={order.Estado} />
           
           <PDFDownloadLink
-            document={<OrderPDF order={order} />}
+            document={<OrderPDF order={{ 
+              ...order, 
+              items: order.items.map(i => ({
+                ...i,
+                name: i.Nombre_Producto || i.name,
+                qty: i.Cantidad || i.qty,
+                subtotal: i.Total_Item || i.subtotal
+              }))
+            }} />}
             fileName={`Pedido_${order.ID_Pedido}.pdf`}
             style={{ textDecoration: 'none' }}
           >

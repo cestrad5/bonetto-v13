@@ -171,15 +171,28 @@ const styles = StyleSheet.create({
 });
 
 const OrderPDF = ({ order }) => {
+  console.log("Rendering PDF for order:", order?.ID_Pedido, order);
+  
   try {
-    if (!order) return null;
+    if (!order) {
+      console.warn("OrderPDF: No order data provided");
+      return null;
+    }
 
     const items = order.items || [];
     const date = order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO', {
       year: 'numeric', month: 'long', day: 'numeric'
     }) : 'Sin fecha';
 
-    const totalVal = items.reduce((s, i) => s + (parseFloat(i.Total_Item) || 0), 0);
+    // Support both old and new naming conventions
+    const calculateTotal = () => {
+      return items.reduce((s, i) => {
+        const val = i.Total_Item || i.subtotal || (parseFloat(i.priceFinal) * i.qty) || 0;
+        return s + parseFloat(val);
+      }, 0);
+    };
+
+    const totalVal = calculateTotal();
 
     return (
       <Document title={`Pedido_${order.ID_Pedido || 'S_N'}`}>
@@ -191,7 +204,7 @@ const OrderPDF = ({ order }) => {
               <Text style={{ fontSize: 10, color: '#64748b' }}>con Amor</Text>
             </View>
             <View style={styles.orderInfo}>
-              <Text style={styles.title}>PEDIDO #{String(order.ID_Pedido || 'S/N').slice(-8).toUpperCase()}</Text>
+              <Text style={styles.title}>PEDIDO #{String(order.ID_Pedido || 'S/N').toUpperCase()}</Text>
               <Text style={styles.subtitle}>{date}</Text>
               <Text style={styles.subtitle}>Estado: {order.Estado || 'Pendiente'}</Text>
             </View>
@@ -201,11 +214,11 @@ const OrderPDF = ({ order }) => {
           <View style={styles.customerSection}>
             <View style={{ marginBottom: 10 }}>
               <Text style={styles.customerLabel}>CLIENTE</Text>
-              <Text style={styles.customerValue}>{order.Nombre_Cliente || 'No especificado'}</Text>
+              <Text style={styles.customerValue}>{order.Nombre_Cliente || order.clientName || 'No especificado'}</Text>
             </View>
             <View>
               <Text style={styles.customerLabel}>ASESOR COMERCIAL</Text>
-              <Text style={styles.customerValue}>{order.Asesor || 'N/A'}</Text>
+              <Text style={styles.customerValue}>{order.Asesor || order.userEmail || 'N/A'}</Text>
             </View>
           </View>
 
@@ -213,33 +226,23 @@ const OrderPDF = ({ order }) => {
           <Text style={styles.sectionTitle}>Detalle del Pedido</Text>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
-              <View style={styles.colImg}><Text style={styles.headerText}>Imagen</Text></View>
-              <View style={styles.colDesc}><Text style={styles.headerText}>Producto</Text></View>
+              <View style={[styles.colDesc, { width: '60%' }]}><Text style={styles.headerText}>Producto</Text></View>
               <View style={styles.colQty}><Text style={styles.headerText}>Cant.</Text></View>
               <View style={styles.colPrice}><Text style={styles.headerText}>Subtotal</Text></View>
             </View>
 
             {items.map((item, index) => (
               <View key={index} style={styles.tableRow}>
-                <View style={styles.colImg}>
-                  {item.Imagen_URL ? (
-                    <Image src={item.Imagen_URL} style={styles.productImg} />
-                  ) : (
-                    <View style={[styles.productImg, { backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center' }]}>
-                      <Text style={{ fontSize: 8, color: '#94a3b8' }}>Sin foto</Text>
-                    </View>
-                  )}
-                </View>
-                <View style={styles.colDesc}>
-                  <Text style={styles.productName}>{item.Nombre_Producto || 'Producto sin nombre'}</Text>
-                  <Text style={styles.productSku}>SKU: {item.SKU || 'N/A'}</Text>
+                <View style={[styles.colDesc, { width: '60%' }]}>
+                  <Text style={styles.productName}>{item.Nombre_Producto || item.name || item.Nombre || 'Producto'}</Text>
+                  <Text style={styles.productSku}>SKU: {item.SKU || item.sku || 'N/A'}</Text>
                 </View>
                 <View style={styles.colQty}>
-                  <Text style={styles.cellText}>{item.Cantidad || 0}</Text>
+                  <Text style={styles.cellText}>{item.Cantidad || item.qty || 0}</Text>
                 </View>
                 <View style={styles.colPrice}>
                   <Text style={styles.cellText}>
-                    ${parseFloat(item.Total_Item || 0).toLocaleString('es-CO')}
+                    ${parseFloat(item.Total_Item || item.subtotal || 0).toLocaleString('es-CO')}
                   </Text>
                 </View>
               </View>
@@ -253,26 +256,30 @@ const OrderPDF = ({ order }) => {
           </View>
 
           {/* Notes */}
-          {(order.Notas || order.Notas_Pedido) && (
+          {(order.Notas || order.Notas_Pedido || order.note) && (
             <View style={styles.noteSection}>
               <Text style={styles.noteTitle}>OBSERVACIONES</Text>
-              <Text style={styles.noteText}>{order.Notas || order.Notas_Pedido}</Text>
+              <Text style={styles.noteText}>{order.Notas || order.Notas_Pedido || order.note}</Text>
             </View>
           )}
 
           {/* Footer */}
           <Text style={styles.footer}>
-            Este documento es un comprobante de pedido generado desde la App Bonetto. 
             Bonetto con Amor - Todos los derechos reservados © {new Date().getFullYear()}
           </Text>
         </Page>
       </Document>
     );
   } catch (error) {
-    console.error("PDF Render Error:", error);
+    console.error("CRITICAL PDF ERROR:", error);
     return (
       <Document>
-        <Page size="A4"><Text>Error al generar PDF: {error.message}</Text></Page>
+        <Page size="A4">
+          <View style={{ padding: 40 }}>
+            <Text>Error al generar el PDF.</Text>
+            <Text style={{ fontSize: 10, marginTop: 10 }}>{error.message}</Text>
+          </View>
+        </Page>
       </Document>
     );
   }
