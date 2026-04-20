@@ -179,19 +179,20 @@ const money = (v) => {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const OrderPDF = ({ order }) => {
-  // Support both naming conventions: Google Sheets fields vs cart fields
-  const items  = Array.isArray(order?.items) ? order.items : [];
-  const client = safe(order?.Nombre_Cliente || order?.clientName, 'No especificado');
-  const asesor = safe(order?.Asesor || order?.Email_Asesor || order?.userEmail, 'N/A');
-  const orderId = safe(order?.ID_Pedido || order?.orderId, 'S/N');
-  const fecha   = order?.Fecha
+  // Use confirmed Google Sheet column names as primary, with fallbacks
+  const items    = Array.isArray(order?.items) ? order.items : [];
+  const client   = safe(order?.Cliente_Nombre  || order?.Nombre_Cliente  || order?.clientName, 'No especificado');
+  const asesor   = safe(order?.Usuario_Email   || order?.Email_Asesor    || order?.userEmail,  'N/A');
+  const orderId  = safe(order?.Pedido_ID       || order?.ID_Pedido       || order?.orderId,    'S/N');
+  const fecha    = order?.Fecha
     ? new Date(order.Fecha).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
     : 'Sin fecha';
-  const estado  = safe(order?.Estado, 'Pendiente');
-  const nota    = safe(order?.Notas || order?.Notas_Pedido || order?.note);
+  const estado   = safe(order?.Estado, 'Pendiente');
+  const nota     = safe(order?.Nota || order?.Notas || order?.Notas_Pedido || order?.note);
 
   const total = items.reduce((sum, i) => {
-    const v = parseFloat(i.Total_Item ?? i.subtotal ?? (parseFloat(i.priceFinal) * (i.qty || i.Cantidad || 0))) || 0;
+    // Confirmed column L = Subtotal
+    const v = parseFloat(i.Subtotal ?? i.Total_Item ?? i.subtotal ?? 0) || 0;
     return sum + v;
   }, 0);
 
@@ -243,11 +244,12 @@ const OrderPDF = ({ order }) => {
           </View>
         ) : (
           items.map((item, idx) => {
-            const name     = safe(item.Nombre_Producto ?? item.name ?? item.Nombre, 'Producto');
+            // Confirmed sheet headers: Producto_Nombre, SKU, Qty, Precio_Final, Subtotal
+            const name     = safe(item.Producto_Nombre ?? item.Nombre_Producto ?? item.name ?? item.Nombre, 'Producto');
             const sku      = safe(item.SKU ?? item.sku, '—');
-            const qty      = safe(item.Cantidad ?? item.qty, '0');
-            const unitP    = parseFloat(item.Precio_Unit ?? item.priceFinal ?? 0);
-            const subtotal = parseFloat(item.Total_Item ?? item.subtotal ?? (unitP * parseFloat(qty))) || 0;
+            const qty      = safe(item.Qty ?? item.Cantidad ?? item.qty, '0');
+            const unitP    = parseFloat(item.Precio_Final ?? item.priceFinal ?? 0);
+            const subtotal = parseFloat(item.Subtotal ?? item.Total_Item ?? item.subtotal ?? (unitP * parseFloat(qty))) || 0;
 
             return (
               <View key={idx} style={styles.tableRow}>

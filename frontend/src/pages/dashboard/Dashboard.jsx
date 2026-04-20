@@ -68,8 +68,8 @@ const Dashboard = () => {
     load();
   }, []);
 
-  // Unique orders by orderId
-  const uniqueOrders = [...new Map(orders.map(o => [o.ID_Pedido, o])).values()];
+  // Unique orders by Pedido_ID (confirmed sheet header)
+  const uniqueOrders = [...new Map(orders.map(o => [o.Pedido_ID, o])).values()];
   const pending = uniqueOrders.filter(o => o.Estado === 'Pendiente').length;
   const inProd = uniqueOrders.filter(o => o.Estado === 'En Producción').length;
 
@@ -149,10 +149,10 @@ const Dashboard = () => {
               }}>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, fontWeight: '600', fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {order.Nombre_Cliente}
+                    {order.Cliente_Nombre}
                   </p>
                   <p style={{ margin: 0, fontSize: '0.72rem', color: '#64748b' }}>
-                    {order.ID_Pedido} · {order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO') : ''}
+                    {order.Pedido_ID} · {order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO') : ''}
                   </p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
@@ -169,8 +169,8 @@ const Dashboard = () => {
                   </span>
 
                   <PDFDownloadLink
-                    document={<OrderPDF order={{ ...order, items: orders.filter(x => x.ID_Pedido === order.ID_Pedido) }} />}
-                    fileName={`Pedido_${order.ID_Pedido}.pdf`}
+                    document={<OrderPDF order={{ ...order, items: orders.filter(x => x.Pedido_ID === order.Pedido_ID) }} />}
+                    fileName={`Pedido_${order.Pedido_ID}.pdf`}
                     style={{ textDecoration: 'none' }}
                   >
                     {({ loading }) => (

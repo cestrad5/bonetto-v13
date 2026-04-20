@@ -79,39 +79,17 @@ export const getOrders = asyncHandler(async (req, res) => {
   const rows = await getSheetData('Pedidos!A:O');
   if (!rows || rows.length === 0) return res.json([]);
 
-  const headers = rows[0];
-  const dataRows = rows.slice(1);
   const orders = mapRowsToObjects(rows);
-
   const { role, email } = req.user;
 
   if (role === 'Admin' || role === 'Produccion') {
     return res.json(orders);
   }
 
-  // Column C (index 2) is always the asesor email regardless of header name
-  const emailColIndex = 2;
-  const emailHeader = headers[emailColIndex] || '';
-
-  const filtered = orders.filter(o => {
-    // Try known header names first
-    const byKnownHeader =
-      (o.Email_Asesor && o.Email_Asesor.toLowerCase() === email.toLowerCase()) ||
-      (o.Asesor       && o.Asesor.toLowerCase()       === email.toLowerCase()) ||
-      (o.userEmail    && o.userEmail.toLowerCase()    === email.toLowerCase()) ||
-      (o.email        && o.email.toLowerCase()        === email.toLowerCase());
-
-    // Fallback: use the actual header name from the sheet
-    const dynamicKey = o[emailHeader];
-    const byDynamicHeader = dynamicKey && dynamicKey.toLowerCase() === email.toLowerCase();
-
-    // Last resort: access by column index directly from raw data
-    const rawRow = dataRows.find(r => r[0] === o.ID_Pedido);
-    const byIndex = rawRow && rawRow[emailColIndex] &&
-      rawRow[emailColIndex].toLowerCase() === email.toLowerCase();
-
-    return byKnownHeader || byDynamicHeader || byIndex;
-  });
+  // Column C header is confirmed: "Usuario_Email"
+  const filtered = orders.filter(o =>
+    o.Usuario_Email && o.Usuario_Email.toLowerCase() === email.toLowerCase()
+  );
 
   res.json(filtered);
 });

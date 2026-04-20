@@ -26,7 +26,8 @@ const Badge = ({ status }) => {
 
 const OrderRow = ({ order }) => {
   const [open, setOpen] = useState(false);
-  const total = order.items.reduce((s, i) => s + (parseFloat(i.Total_Item) || 0), 0);
+  // Confirmed sheet header: Subtotal = column L
+  const total = order.items.reduce((s, i) => s + (parseFloat(i.Subtotal) || 0), 0);
 
   return (
     <div style={{
@@ -45,10 +46,10 @@ const OrderRow = ({ order }) => {
       >
         <div style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} onClick={() => setOpen(!open)}>
           <p style={{ margin: 0, fontWeight: '700', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {order.Nombre_Cliente}
+            {order.Cliente_Nombre}
           </p>
           <p style={{ margin: 0, fontSize: '0.72rem', color: '#64748b' }}>
-            {order.ID_Pedido} · {order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO') : 'Sin fecha'} · {order.items.length} ítem{order.items.length !== 1 ? 's' : ''}
+            {order.Pedido_ID} · {order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO') : 'Sin fecha'} · {order.items.length} ítem{order.items.length !== 1 ? 's' : ''}
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
@@ -62,12 +63,12 @@ const OrderRow = ({ order }) => {
               ...order, 
               items: order.items.map(i => ({
                 ...i,
-                name: i.Nombre_Producto || i.name,
-                qty: i.Cantidad || i.qty,
-                subtotal: i.Total_Item || i.subtotal
+                name: i.Producto_Nombre,
+                qty:  i.Qty,
+                subtotal: i.Subtotal
               }))
             }} />}
-            fileName={`Pedido_${order.ID_Pedido}.pdf`}
+            fileName={`Pedido_${order.Pedido_ID}.pdf`}
             style={{ textDecoration: 'none' }}
           >
             {({ loading }) => (
@@ -114,10 +115,10 @@ const OrderRow = ({ order }) => {
                 {order.items.map((item, idx) => (
                   <tr key={idx} style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
                     <td style={{ padding: '10px 14px', color: '#6366f1', fontFamily: 'monospace', fontSize: '0.78rem' }}>{item.SKU}</td>
-                    <td style={{ padding: '10px 14px', fontWeight: '500' }}>{item.Nombre_Producto}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'center' }}>{item.Cantidad}</td>
-                    <td style={{ padding: '10px 14px' }}>${parseFloat(item.Precio_Unit || 0).toLocaleString('es-CO')}</td>
-                    <td style={{ padding: '10px 14px', fontWeight: '700', color: '#10b981' }}>${parseFloat(item.Total_Item || 0).toLocaleString('es-CO')}</td>
+                    <td style={{ padding: '10px 14px', fontWeight: '500' }}>{item.Producto_Nombre}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'center' }}>{item.Qty}</td>
+                    <td style={{ padding: '10px 14px' }}>${parseFloat(item.Precio_Final || 0).toLocaleString('es-CO')}</td>
+                    <td style={{ padding: '10px 14px', fontWeight: '700', color: '#10b981' }}>${parseFloat(item.Subtotal || 0).toLocaleString('es-CO')}</td>
                   </tr>
                 ))}
               </tbody>
@@ -129,9 +130,9 @@ const OrderRow = ({ order }) => {
               </tfoot>
             </table>
           </div>
-          {order.Notas && (
+          {order.Nota && (
             <p style={{ padding: '10px 18px 14px', color: '#94a3b8', fontSize: '0.8rem', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-              📝 {order.Notas}
+              📝 {order.Nota}
             </p>
           )}
         </div>
@@ -161,15 +162,15 @@ const Orders = () => {
 
   // Group raw rows by ID_Pedido
   const grouped = rawOrders.reduce((acc, row) => {
-    const id = row.ID_Pedido;
+    const id = row.Pedido_ID;       // ← confirmed sheet header
     if (!acc[id]) {
       acc[id] = {
-        ID_Pedido: id,
-        Nombre_Cliente: row.Nombre_Cliente,
-        Fecha: row.Fecha,
-        Estado: row.Estado,
-        Notas: row.Notas,
-        Asesor: row.Asesor,
+        Pedido_ID:      id,
+        Cliente_Nombre: row.Cliente_Nombre,
+        Fecha:          row.Fecha,
+        Estado:         row.Estado,
+        Nota:           row.Nota,
+        Usuario_Email:  row.Usuario_Email,
         items: [],
       };
     }
