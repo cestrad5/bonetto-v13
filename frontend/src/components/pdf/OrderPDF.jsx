@@ -1,8 +1,10 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-import { LOGO_B64 } from './logoB64';
 
-// ─── No external fonts — using built-in Helvetica ────────────────────────────
+// ─── LOGO via public URL (same domain = no CORS issue) ───────────────────────
+// The logo.png was copied to /frontend/public/logo.png
+// It is served from https://pedidos.bonettoconamor.com/logo.png
+const LOGO_URL = 'https://pedidos.bonettoconamor.com/logo.png';
 
 const C = {
   indigo: '#4f46e5',
@@ -35,7 +37,19 @@ const styles = StyleSheet.create({
   logo: {
     width: 120,
     height: 52,
-    objectFit: 'contain',
+  },
+  brandFallback: {
+    flexDirection: 'column',
+  },
+  brandName: {
+    fontSize: 22,
+    fontFamily: 'Helvetica-Bold',
+    color: C.indigo,
+  },
+  brandSub: {
+    fontSize: 9,
+    color: C.gray,
+    marginTop: 2,
   },
   orderTitle: {
     fontSize: 18,
@@ -93,11 +107,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: C.border,
     alignItems: 'center',
-    minHeight: 72,
+    minHeight: 64,
   },
-  colImg:   { width: '16%' },
+  colImg:   { width: '14%' },
   colSku:   { width: '14%' },
-  colName:  { width: '34%' },
+  colName:  { width: '36%' },
   colQty:   { width: '8%',  textAlign: 'center' },
   colPrice: { width: '14%', textAlign: 'right' },
   colTotal: { width: '14%', textAlign: 'right' },
@@ -116,19 +130,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Oblique',
   },
   productImg: {
-    width: 56,
-    height: 56,
-    borderRadius: 4,
+    width: 48,
+    height: 48,
     objectFit: 'cover',
   },
   imgPlaceholder: {
-    width: 56,
-    height: 56,
-    borderRadius: 4,
+    width: 48,
+    height: 48,
     backgroundColor: C.light,
     justifyContent: 'center',
     alignItems: 'center',
-    border: `1px solid ${C.border}`,
   },
   // ── Totals ────────────────────────────────────────────────────────────────
   totalRow: {
@@ -187,34 +198,34 @@ const styles = StyleSheet.create({
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const safe = (v, fallback = '') => (v !== null && v !== undefined ? String(v) : fallback);
 const money = (v) => '$' + (parseFloat(v) || 0).toLocaleString('es-CO', { minimumFractionDigits: 0 });
-const isValidUrl = (url) => {
-  if (!url || typeof url !== 'string') return false;
-  return url.startsWith('http://') || url.startsWith('https://');
-};
+const isValidUrl = (url) =>
+  typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'));
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const OrderPDF = ({ order }) => {
-  const items    = Array.isArray(order?.items) ? order.items : [];
-  const client   = safe(order?.Cliente_Nombre  || order?.Nombre_Cliente  || order?.clientName,  'No especificado');
-  const asesor   = safe(order?.Usuario_Email   || order?.Email_Asesor    || order?.userEmail,   'N/A');
-  const orderId  = safe(order?.Pedido_ID       || order?.ID_Pedido       || order?.orderId,     'S/N');
-  const fecha    = order?.Fecha
+  const items   = Array.isArray(order?.items) ? order.items : [];
+  const client  = safe(order?.Cliente_Nombre  || order?.Nombre_Cliente  || order?.clientName,  'No especificado');
+  const asesor  = safe(order?.Usuario_Email   || order?.Email_Asesor    || order?.userEmail,   'N/A');
+  const orderId = safe(order?.Pedido_ID       || order?.ID_Pedido       || order?.orderId,     'S/N');
+  const fecha   = order?.Fecha
     ? new Date(order.Fecha).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
     : 'Sin fecha';
-  const estado   = safe(order?.Estado, 'Pendiente');
-  const nota     = safe(order?.Nota || order?.Notas || order?.note);
+  const estado  = safe(order?.Estado, 'Pendiente');
+  const nota    = safe(order?.Nota || order?.Notas || order?.note);
 
-  const total = items.reduce((sum, i) => {
-    return sum + (parseFloat(i.Subtotal ?? i.Total_Item ?? i.subtotal ?? 0) || 0);
-  }, 0);
+  const total = items.reduce(
+    (sum, i) => sum + (parseFloat(i.Subtotal ?? i.Total_Item ?? i.subtotal ?? 0) || 0),
+    0
+  );
 
   return (
     <Document title={`Pedido_${orderId}`}>
       <Page size="A4" style={styles.page}>
 
-        {/* ── Header con logo ── */}
+        {/* ── Header ── */}
         <View style={styles.header}>
-          <Image src={LOGO_B64} style={styles.logo} />
+          {/* Logo — loaded from public URL, no base64 embedding */}
+          <Image src={LOGO_URL} style={styles.logo} />
           <View>
             <Text style={styles.orderTitle}>PEDIDO #{orderId}</Text>
             <Text style={styles.orderMeta}>{fecha}</Text>
@@ -234,10 +245,9 @@ const OrderPDF = ({ order }) => {
           </View>
         </View>
 
-        {/* ── Tabla de productos ── */}
+        {/* ── Tabla ── */}
         <Text style={styles.sectionTitle}>DETALLE DEL PEDIDO</Text>
 
-        {/* Cabecera */}
         <View style={styles.tableHeader}>
           <View style={styles.colImg}><Text style={styles.thText}>FOTO</Text></View>
           <View style={styles.colSku}><Text style={styles.thText}>SKU</Text></View>
@@ -247,7 +257,6 @@ const OrderPDF = ({ order }) => {
           <View style={styles.colTotal}><Text style={styles.thText}>SUBTOTAL</Text></View>
         </View>
 
-        {/* Filas */}
         {items.length === 0 ? (
           <View style={styles.tableRow}>
             <Text style={[styles.tdText, { color: C.gray }]}>Sin ítems registrados</Text>
@@ -263,16 +272,14 @@ const OrderPDF = ({ order }) => {
 
             return (
               <View key={idx} style={styles.tableRow}>
-                {/* Imagen del producto */}
+
+                {/* Imagen del producto — solo si la URL es válida */}
                 <View style={styles.colImg}>
                   {isValidUrl(imgUrl) ? (
-                    <Image
-                      src={imgUrl}
-                      style={styles.productImg}
-                    />
+                    <Image src={imgUrl} style={styles.productImg} />
                   ) : (
                     <View style={styles.imgPlaceholder}>
-                      <Text style={{ fontSize: 7, color: C.gray }}>Sin foto</Text>
+                      <Text style={{ fontSize: 6, color: C.gray }}>—</Text>
                     </View>
                   )}
                 </View>
@@ -292,6 +299,7 @@ const OrderPDF = ({ order }) => {
                 <View style={styles.colTotal}>
                   <Text style={[styles.tdText, { fontFamily: 'Helvetica-Bold' }]}>{money(subtotal)}</Text>
                 </View>
+
               </View>
             );
           })
