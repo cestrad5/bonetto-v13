@@ -1,288 +1,288 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 
-// Register fonts for a more professional look
-Font.register({
-  family: 'Inter',
-  fonts: [
-    { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff' }, // Regular
-    { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGkyAZ9hjp-Ek-_EeA.woff', fontWeight: 'bold' } // Bold
-  ]
-});
+// ─── NO external fonts, NO external images ───────────────────────────────────
+// Using built-in Helvetica to guarantee the PDF always renders, even offline.
+
+const C = {
+  indigo: '#4f46e5',
+  green:  '#10b981',
+  gray:   '#64748b',
+  light:  '#f8fafc',
+  border: '#e2e8f0',
+  dark:   '#1e293b',
+  white:  '#ffffff',
+};
 
 const styles = StyleSheet.create({
   page: {
     padding: 40,
-    fontFamily: 'Inter',
-    backgroundColor: '#ffffff',
+    backgroundColor: C.white,
+    fontFamily: 'Helvetica',
+    fontSize: 10,
+    color: C.dark,
   },
+  // ── Header ────────────────────────────────────────────────────────────────
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 30,
-    borderBottom: 1,
-    borderBottomColor: '#f1f5f9',
+    alignItems: 'flex-start',
     paddingBottom: 20,
-  },
-  logo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#6366f1',
-  },
-  orderInfo: {
-    textAlign: 'right',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
-    color: '#1e293b',
-  },
-  subtitle: {
-    fontSize: 10,
-    color: '#64748b',
-    marginBottom: 2,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#1e293b',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  customerSection: {
-    marginBottom: 30,
-    padding: 15,
-    backgroundColor: '#f8fafc',
-    borderRadius: 8,
-  },
-  customerLabel: {
-    fontSize: 9,
-    color: '#64748b',
-    marginBottom: 4,
-  },
-  customerValue: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#1e293b',
-  },
-  table: {
-    display: 'table',
-    width: 'auto',
-    marginBottom: 30,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomColor: '#f1f5f9',
     borderBottomWidth: 1,
-    alignItems: 'center',
-    minHeight: 80,
-    paddingVertical: 10,
+    borderBottomColor: C.border,
+    marginBottom: 24,
+  },
+  brandName: {
+    fontSize: 22,
+    fontFamily: 'Helvetica-Bold',
+    color: C.indigo,
+  },
+  brandSub: {
+    fontSize: 9,
+    color: C.gray,
+    marginTop: 2,
+  },
+  orderTitle: {
+    fontSize: 18,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'right',
+    color: C.dark,
+  },
+  orderMeta: {
+    fontSize: 9,
+    color: C.gray,
+    textAlign: 'right',
+    marginTop: 3,
+  },
+  // ── Info box ──────────────────────────────────────────────────────────────
+  infoBox: {
+    backgroundColor: C.light,
+    padding: 12,
+    borderRadius: 6,
+    marginBottom: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  infoLabel: {
+    fontSize: 8,
+    color: C.gray,
+    marginBottom: 3,
+    fontFamily: 'Helvetica-Bold',
+  },
+  infoValue: {
+    fontSize: 11,
+    fontFamily: 'Helvetica-Bold',
+    color: C.dark,
+  },
+  // ── Table ─────────────────────────────────────────────────────────────────
+  sectionTitle: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    color: C.gray,
+    letterSpacing: 1,
+    marginBottom: 8,
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#f8fafc',
-    borderBottomColor: '#e2e8f0',
-    borderBottomWidth: 2,
-    minHeight: 30,
-    alignItems: 'center',
-  },
-  colImg: { width: '20%' },
-  colDesc: { width: '40%', paddingRight: 10 },
-  colQty: { width: '15%', textAlign: 'center' },
-  colPrice: { width: '25%', textAlign: 'right' },
-  
-  headerText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#475569',
-    paddingHorizontal: 5,
-  },
-  productImg: {
-    width: 60,
-    height: 60,
+    backgroundColor: C.light,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
     borderRadius: 4,
-    objectFit: 'cover',
+    marginBottom: 4,
   },
-  productName: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 2,
-  },
-  productSku: {
-    fontSize: 9,
-    color: '#64748b',
-  },
-  cellText: {
-    fontSize: 10,
-    color: '#1e293b',
-  },
-  totalSection: {
-    marginTop: 20,
-    paddingTop: 15,
-    borderTop: 2,
-    borderTopColor: '#1e293b',
+  tableRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  colSku:    { width: '18%' },
+  colName:   { width: '42%' },
+  colQty:    { width: '10%', textAlign: 'center' },
+  colPrice:  { width: '15%', textAlign: 'right' },
+  colTotal:  { width: '15%', textAlign: 'right' },
+  thText: {
+    fontSize: 8,
+    fontFamily: 'Helvetica-Bold',
+    color: C.gray,
+  },
+  tdText: {
+    fontSize: 9,
+    color: C.dark,
+  },
+  tdMono: {
+    fontSize: 8,
+    color: C.indigo,
+    fontFamily: 'Helvetica-Oblique',
+  },
+  // ── Totals ────────────────────────────────────────────────────────────────
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
     alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 2,
+    borderTopColor: C.dark,
+    gap: 10,
   },
   totalLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#1e293b',
+    fontSize: 12,
+    fontFamily: 'Helvetica-Bold',
+    color: C.dark,
   },
   totalValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#10b981',
+    fontSize: 18,
+    fontFamily: 'Helvetica-Bold',
+    color: C.green,
   },
-  noteSection: {
-    marginTop: 40,
-    padding: 15,
-    borderLeft: 4,
-    borderLeftColor: '#6366f1',
-    backgroundColor: '#f5f3ff',
+  // ── Notes ─────────────────────────────────────────────────────────────────
+  noteBox: {
+    marginTop: 24,
+    padding: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: C.indigo,
+    backgroundColor: '#eff6ff',
   },
-  noteTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#6366f1',
-    marginBottom: 5,
+  noteLabel: {
+    fontSize: 8,
+    fontFamily: 'Helvetica-Bold',
+    color: C.indigo,
+    marginBottom: 4,
   },
   noteText: {
-    fontSize: 10,
-    color: '#4c1d95',
-    lineHeight: 1.5,
+    fontSize: 9,
+    color: '#1d4ed8',
   },
+  // ── Footer ────────────────────────────────────────────────────────────────
   footer: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 28,
     left: 40,
     right: 40,
     textAlign: 'center',
-    borderTop: 1,
-    borderTopColor: '#f1f5f9',
-    paddingTop: 10,
     fontSize: 8,
-    color: '#94a3b8',
-  }
+    color: C.gray,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    paddingTop: 8,
+  },
 });
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const safe = (v, fallback = '') => (v !== null && v !== undefined ? String(v) : fallback);
+const money = (v) => {
+  const n = parseFloat(v) || 0;
+  return '$' + n.toLocaleString('es-CO', { minimumFractionDigits: 0 });
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
 const OrderPDF = ({ order }) => {
-  console.log("Rendering PDF for order:", order?.ID_Pedido, order);
-  
-  try {
-    if (!order) {
-      console.warn("OrderPDF: No order data provided");
-      return null;
-    }
+  // Support both naming conventions: Google Sheets fields vs cart fields
+  const items  = Array.isArray(order?.items) ? order.items : [];
+  const client = safe(order?.Nombre_Cliente || order?.clientName, 'No especificado');
+  const asesor = safe(order?.Asesor || order?.Email_Asesor || order?.userEmail, 'N/A');
+  const orderId = safe(order?.ID_Pedido || order?.orderId, 'S/N');
+  const fecha   = order?.Fecha
+    ? new Date(order.Fecha).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
+    : 'Sin fecha';
+  const estado  = safe(order?.Estado, 'Pendiente');
+  const nota    = safe(order?.Notas || order?.Notas_Pedido || order?.note);
 
-    const items = order.items || [];
-    const date = order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO', {
-      year: 'numeric', month: 'long', day: 'numeric'
-    }) : 'Sin fecha';
+  const total = items.reduce((sum, i) => {
+    const v = parseFloat(i.Total_Item ?? i.subtotal ?? (parseFloat(i.priceFinal) * (i.qty || i.Cantidad || 0))) || 0;
+    return sum + v;
+  }, 0);
 
-    // Support both old and new naming conventions
-    const calculateTotal = () => {
-      return items.reduce((s, i) => {
-        const val = i.Total_Item || i.subtotal || (parseFloat(i.priceFinal) * i.qty) || 0;
-        return s + parseFloat(val);
-      }, 0);
-    };
+  return (
+    <Document title={`Pedido_${orderId}`}>
+      <Page size="A4" style={styles.page}>
 
-    const totalVal = calculateTotal();
-
-    return (
-      <Document title={`Pedido_${order.ID_Pedido || 'S_N'}`}>
-        <Page size="A4" style={styles.page}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.logo}>BONETTO</Text>
-              <Text style={{ fontSize: 10, color: '#64748b' }}>con Amor</Text>
-            </View>
-            <View style={styles.orderInfo}>
-              <Text style={styles.title}>PEDIDO #{String(order.ID_Pedido || 'S/N').toUpperCase()}</Text>
-              <Text style={styles.subtitle}>{date}</Text>
-              <Text style={styles.subtitle}>Estado: {order.Estado || 'Pendiente'}</Text>
-            </View>
+        {/* ── Header ── */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.brandName}>BONETTO</Text>
+            <Text style={styles.brandSub}>con Amor</Text>
           </View>
-
-          {/* Customer Info */}
-          <View style={styles.customerSection}>
-            <View style={{ marginBottom: 10 }}>
-              <Text style={styles.customerLabel}>CLIENTE</Text>
-              <Text style={styles.customerValue}>{order.Nombre_Cliente || order.clientName || 'No especificado'}</Text>
-            </View>
-            <View>
-              <Text style={styles.customerLabel}>ASESOR COMERCIAL</Text>
-              <Text style={styles.customerValue}>{order.Asesor || order.userEmail || 'N/A'}</Text>
-            </View>
+          <View>
+            <Text style={styles.orderTitle}>PEDIDO #{orderId}</Text>
+            <Text style={styles.orderMeta}>{fecha}</Text>
+            <Text style={styles.orderMeta}>Estado: {estado}</Text>
           </View>
+        </View>
 
-          {/* Products Table */}
-          <Text style={styles.sectionTitle}>Detalle del Pedido</Text>
-          <View style={styles.table}>
-            <View style={styles.tableHeader}>
-              <View style={[styles.colDesc, { width: '60%' }]}><Text style={styles.headerText}>Producto</Text></View>
-              <View style={styles.colQty}><Text style={styles.headerText}>Cant.</Text></View>
-              <View style={styles.colPrice}><Text style={styles.headerText}>Subtotal</Text></View>
-            </View>
+        {/* ── Client info ── */}
+        <View style={styles.infoBox}>
+          <View>
+            <Text style={styles.infoLabel}>CLIENTE</Text>
+            <Text style={styles.infoValue}>{client}</Text>
+          </View>
+          <View>
+            <Text style={styles.infoLabel}>ASESOR COMERCIAL</Text>
+            <Text style={styles.infoValue}>{asesor}</Text>
+          </View>
+        </View>
 
-            {items.map((item, index) => (
-              <View key={index} style={styles.tableRow}>
-                <View style={[styles.colDesc, { width: '60%' }]}>
-                  <Text style={styles.productName}>{item.Nombre_Producto || item.name || item.Nombre || 'Producto'}</Text>
-                  <Text style={styles.productSku}>SKU: {item.SKU || item.sku || 'N/A'}</Text>
-                </View>
-                <View style={styles.colQty}>
-                  <Text style={styles.cellText}>{item.Cantidad || item.qty || 0}</Text>
-                </View>
-                <View style={styles.colPrice}>
-                  <Text style={styles.cellText}>
-                    ${parseFloat(item.Total_Item || item.subtotal || 0).toLocaleString('es-CO')}
-                  </Text>
-                </View>
+        {/* ── Items table ── */}
+        <Text style={styles.sectionTitle}>DETALLE DEL PEDIDO</Text>
+
+        {/* Table header */}
+        <View style={styles.tableHeader}>
+          <View style={styles.colSku}><Text style={styles.thText}>SKU</Text></View>
+          <View style={styles.colName}><Text style={styles.thText}>PRODUCTO</Text></View>
+          <View style={styles.colQty}><Text style={styles.thText}>CANT.</Text></View>
+          <View style={styles.colPrice}><Text style={styles.thText}>P. UNIT.</Text></View>
+          <View style={styles.colTotal}><Text style={styles.thText}>SUBTOTAL</Text></View>
+        </View>
+
+        {/* Rows */}
+        {items.length === 0 ? (
+          <View style={styles.tableRow}>
+            <Text style={[styles.tdText, { color: C.gray }]}>Sin ítems registrados</Text>
+          </View>
+        ) : (
+          items.map((item, idx) => {
+            const name     = safe(item.Nombre_Producto ?? item.name ?? item.Nombre, 'Producto');
+            const sku      = safe(item.SKU ?? item.sku, '—');
+            const qty      = safe(item.Cantidad ?? item.qty, '0');
+            const unitP    = parseFloat(item.Precio_Unit ?? item.priceFinal ?? 0);
+            const subtotal = parseFloat(item.Total_Item ?? item.subtotal ?? (unitP * parseFloat(qty))) || 0;
+
+            return (
+              <View key={idx} style={styles.tableRow}>
+                <View style={styles.colSku}><Text style={styles.tdMono}>{sku}</Text></View>
+                <View style={styles.colName}><Text style={styles.tdText}>{name}</Text></View>
+                <View style={styles.colQty}><Text style={styles.tdText}>{qty}</Text></View>
+                <View style={styles.colPrice}><Text style={styles.tdText}>{money(unitP)}</Text></View>
+                <View style={styles.colTotal}><Text style={[styles.tdText, { fontFamily: 'Helvetica-Bold' }]}>{money(subtotal)}</Text></View>
               </View>
-            ))}
-          </View>
+            );
+          })
+        )}
 
-          {/* Totals */}
-          <View style={styles.totalSection}>
-            <Text style={styles.totalLabel}>VALOR TOTAL</Text>
-            <Text style={styles.totalValue}>${totalVal.toLocaleString('es-CO')}</Text>
-          </View>
+        {/* ── Total ── */}
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>TOTAL DEL PEDIDO:</Text>
+          <Text style={styles.totalValue}>{money(total)}</Text>
+        </View>
 
-          {/* Notes */}
-          {(order.Notas || order.Notas_Pedido || order.note) && (
-            <View style={styles.noteSection}>
-              <Text style={styles.noteTitle}>OBSERVACIONES</Text>
-              <Text style={styles.noteText}>{order.Notas || order.Notas_Pedido || order.note}</Text>
-            </View>
-          )}
-
-          {/* Footer */}
-          <Text style={styles.footer}>
-            Bonetto con Amor - Todos los derechos reservados © {new Date().getFullYear()}
-          </Text>
-        </Page>
-      </Document>
-    );
-  } catch (error) {
-    console.error("CRITICAL PDF ERROR:", error);
-    return (
-      <Document>
-        <Page size="A4">
-          <View style={{ padding: 40 }}>
-            <Text>Error al generar el PDF.</Text>
-            <Text style={{ fontSize: 10, marginTop: 10 }}>{error.message}</Text>
+        {/* ── Note ── */}
+        {nota ? (
+          <View style={styles.noteBox}>
+            <Text style={styles.noteLabel}>OBSERVACIONES</Text>
+            <Text style={styles.noteText}>{nota}</Text>
           </View>
-        </Page>
-      </Document>
-    );
-  }
+        ) : null}
+
+        {/* ── Footer ── */}
+        <Text style={styles.footer}>
+          Bonetto con Amor · Comprobante de Pedido · {new Date().getFullYear()}
+        </Text>
+
+      </Page>
+    </Document>
+  );
 };
 
 export default OrderPDF;

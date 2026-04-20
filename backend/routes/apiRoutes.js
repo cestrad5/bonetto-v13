@@ -1,7 +1,7 @@
 import express from 'express';
 import { getProducts, refreshProducts } from '../controllers/productController.js';
 import { getClients } from '../controllers/clientController.js';
-import { createOrder, getOrders } from '../controllers/orderController.js';
+import { createOrder, getOrders, debugSheet } from '../controllers/orderController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -16,6 +16,9 @@ router.get('/clients', protect, getClients);
 // Orders
 router.post('/orders', protect, createOrder);
 router.get('/orders', protect, getOrders);
+
+// Temporary diagnostic — remove after confirming sheet headers
+router.get('/debug/sheet-headers', protect, debugSheet);
 
 // User Profile
 router.get('/me', protect, (req, res) => {
