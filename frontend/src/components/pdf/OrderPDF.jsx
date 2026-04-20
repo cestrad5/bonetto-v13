@@ -1,19 +1,18 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 
-// ─── LOGO via public URL (same domain = no CORS issue) ───────────────────────
-// The logo.png was copied to /frontend/public/logo.png
-// It is served from https://pedidos.bonettoconamor.com/logo.png
+// ─── LOGO: mismo dominio → sin CORS ──────────────────────────────────────────
 const LOGO_URL = 'https://pedidos.bonettoconamor.com/logo.png';
 
 const C = {
-  indigo: '#4f46e5',
-  green:  '#10b981',
-  gray:   '#64748b',
-  light:  '#f8fafc',
-  border: '#e2e8f0',
-  dark:   '#1e293b',
-  white:  '#ffffff',
+  indigo:  '#4f46e5',
+  green:   '#10b981',
+  gray:    '#64748b',
+  light:   '#f8fafc',
+  border:  '#e2e8f0',
+  dark:    '#1e293b',
+  white:   '#ffffff',
+  accent:  '#818cf8',
 };
 
 const styles = StyleSheet.create({
@@ -35,48 +34,57 @@ const styles = StyleSheet.create({
     marginBottom: 22,
   },
   logo: {
-    width: 120,
-    height: 52,
+    width: 130,
+    height: 57,
   },
-  brandFallback: {
-    flexDirection: 'column',
-  },
-  brandName: {
-    fontSize: 22,
-    fontFamily: 'Helvetica-Bold',
-    color: C.indigo,
-  },
-  brandSub: {
-    fontSize: 9,
-    color: C.gray,
-    marginTop: 2,
+  orderBlock: {
+    alignItems: 'flex-end',
   },
   orderTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'Helvetica-Bold',
-    textAlign: 'right',
     color: C.dark,
   },
   orderMeta: {
     fontSize: 9,
     color: C.gray,
-    textAlign: 'right',
     marginTop: 3,
+  },
+  estadoBadge: {
+    marginTop: 5,
+    paddingVertical: 3,
+    paddingHorizontal: 10,
+    backgroundColor: C.light,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: C.border,
+    alignSelf: 'flex-end',
+  },
+  estadoText: {
+    fontSize: 8,
+    fontFamily: 'Helvetica-Bold',
+    color: C.indigo,
   },
   // ── Info box ──────────────────────────────────────────────────────────────
   infoBox: {
     backgroundColor: C.light,
-    padding: 12,
+    padding: 14,
     borderRadius: 6,
     marginBottom: 22,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  infoGroup: {
+    flexDirection: 'column',
   },
   infoLabel: {
-    fontSize: 8,
+    fontSize: 7,
     color: C.gray,
     marginBottom: 3,
     fontFamily: 'Helvetica-Bold',
+    letterSpacing: 0.5,
   },
   infoValue: {
     fontSize: 11,
@@ -85,43 +93,47 @@ const styles = StyleSheet.create({
   },
   // ── Table ─────────────────────────────────────────────────────────────────
   sectionTitle: {
-    fontSize: 9,
+    fontSize: 8,
     fontFamily: 'Helvetica-Bold',
     color: C.gray,
-    letterSpacing: 1,
+    letterSpacing: 1.5,
     marginBottom: 8,
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: C.light,
-    paddingVertical: 7,
-    paddingHorizontal: 8,
+    backgroundColor: C.dark,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 4,
     marginBottom: 2,
-    alignItems: 'center',
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: C.border,
-    alignItems: 'center',
-    minHeight: 64,
   },
-  colImg:   { width: '14%' },
-  colSku:   { width: '14%' },
-  colName:  { width: '36%' },
-  colQty:   { width: '8%',  textAlign: 'center' },
+  tableRowAlt: {
+    backgroundColor: '#fafafa',
+  },
+  colSku:   { width: '16%' },
+  colName:  { width: '46%' },
+  colQty:   { width: '10%', textAlign: 'center' },
   colPrice: { width: '14%', textAlign: 'right' },
   colTotal: { width: '14%', textAlign: 'right' },
   thText: {
     fontSize: 8,
     fontFamily: 'Helvetica-Bold',
-    color: C.gray,
+    color: C.white,
   },
   tdText: {
     fontSize: 9,
+    color: C.dark,
+  },
+  tdBold: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
     color: C.dark,
   },
   tdMono: {
@@ -129,52 +141,51 @@ const styles = StyleSheet.create({
     color: C.indigo,
     fontFamily: 'Helvetica-Oblique',
   },
-  productImg: {
-    width: 48,
-    height: 48,
-    objectFit: 'cover',
+  tdGreen: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    color: C.green,
+    textAlign: 'right',
   },
-  imgPlaceholder: {
-    width: 48,
-    height: 48,
-    backgroundColor: C.light,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // ── Totals ────────────────────────────────────────────────────────────────
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+  // ── Total ─────────────────────────────────────────────────────────────────
+  totalSection: {
     marginTop: 16,
-    paddingTop: 12,
-    borderTopWidth: 2,
-    borderTopColor: C.dark,
-    gap: 12,
+    alignItems: 'flex-end',
+  },
+  totalBox: {
+    backgroundColor: C.dark,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
   },
   totalLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Helvetica-Bold',
-    color: C.dark,
+    color: C.white,
   },
   totalValue: {
     fontSize: 20,
     fontFamily: 'Helvetica-Bold',
     color: C.green,
   },
-  // ── Notes ─────────────────────────────────────────────────────────────────
+  // ── Note ──────────────────────────────────────────────────────────────────
   noteBox: {
     marginTop: 22,
     padding: 12,
     borderLeftWidth: 3,
     borderLeftColor: C.indigo,
     backgroundColor: '#eff6ff',
+    borderRadius: 4,
   },
   noteLabel: {
-    fontSize: 8,
+    fontSize: 7,
     fontFamily: 'Helvetica-Bold',
     color: C.indigo,
     marginBottom: 4,
+    letterSpacing: 0.5,
   },
   noteText: {
     fontSize: 9,
@@ -196,10 +207,8 @@ const styles = StyleSheet.create({
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const safe = (v, fallback = '') => (v !== null && v !== undefined ? String(v) : fallback);
+const safe = (v, fallback = '') => (v !== null && v !== undefined && v !== '' ? String(v) : fallback);
 const money = (v) => '$' + (parseFloat(v) || 0).toLocaleString('es-CO', { minimumFractionDigits: 0 });
-const isValidUrl = (url) =>
-  typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'));
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const OrderPDF = ({ order }) => {
@@ -222,34 +231,34 @@ const OrderPDF = ({ order }) => {
     <Document title={`Pedido_${orderId}`}>
       <Page size="A4" style={styles.page}>
 
-        {/* ── Header ── */}
+        {/* ── Header con logo (mismo dominio → sin CORS) ── */}
         <View style={styles.header}>
-          {/* Logo — loaded from public URL, no base64 embedding */}
           <Image src={LOGO_URL} style={styles.logo} />
-          <View>
+          <View style={styles.orderBlock}>
             <Text style={styles.orderTitle}>PEDIDO #{orderId}</Text>
             <Text style={styles.orderMeta}>{fecha}</Text>
-            <Text style={styles.orderMeta}>Estado: {estado}</Text>
+            <View style={styles.estadoBadge}>
+              <Text style={styles.estadoText}>{estado}</Text>
+            </View>
           </View>
         </View>
 
         {/* ── Info cliente / asesor ── */}
         <View style={styles.infoBox}>
-          <View>
+          <View style={styles.infoGroup}>
             <Text style={styles.infoLabel}>CLIENTE</Text>
             <Text style={styles.infoValue}>{client}</Text>
           </View>
-          <View>
+          <View style={styles.infoGroup}>
             <Text style={styles.infoLabel}>ASESOR COMERCIAL</Text>
             <Text style={styles.infoValue}>{asesor}</Text>
           </View>
         </View>
 
-        {/* ── Tabla ── */}
+        {/* ── Tabla de productos (sin imágenes: CORS bloqueado por WordPress) ── */}
         <Text style={styles.sectionTitle}>DETALLE DEL PEDIDO</Text>
 
         <View style={styles.tableHeader}>
-          <View style={styles.colImg}><Text style={styles.thText}>FOTO</Text></View>
           <View style={styles.colSku}><Text style={styles.thText}>SKU</Text></View>
           <View style={styles.colName}><Text style={styles.thText}>PRODUCTO</Text></View>
           <View style={styles.colQty}><Text style={styles.thText}>CANT.</Text></View>
@@ -268,47 +277,36 @@ const OrderPDF = ({ order }) => {
             const qty      = safe(item.Qty ?? item.Cantidad ?? item.qty, '0');
             const unitP    = parseFloat(item.Precio_Final ?? item.priceFinal ?? 0);
             const subtotal = parseFloat(item.Subtotal ?? item.Total_Item ?? item.subtotal ?? (unitP * parseFloat(qty))) || 0;
-            const imgUrl   = item.Imagen_URL || item.imageUrl || '';
+            const isAlt    = idx % 2 === 1;
 
             return (
-              <View key={idx} style={styles.tableRow}>
-
-                {/* Imagen del producto — solo si la URL es válida */}
-                <View style={styles.colImg}>
-                  {isValidUrl(imgUrl) ? (
-                    <Image src={imgUrl} style={styles.productImg} />
-                  ) : (
-                    <View style={styles.imgPlaceholder}>
-                      <Text style={{ fontSize: 6, color: C.gray }}>—</Text>
-                    </View>
-                  )}
-                </View>
-
+              <View key={idx} style={[styles.tableRow, isAlt && styles.tableRowAlt]}>
                 <View style={styles.colSku}>
                   <Text style={styles.tdMono}>{sku}</Text>
                 </View>
                 <View style={styles.colName}>
-                  <Text style={styles.tdText}>{name}</Text>
+                  <Text style={styles.tdBold}>{name}</Text>
                 </View>
                 <View style={styles.colQty}>
-                  <Text style={styles.tdText}>{qty}</Text>
+                  <Text style={[styles.tdText, { textAlign: 'center' }]}>{qty}</Text>
                 </View>
                 <View style={styles.colPrice}>
-                  <Text style={styles.tdText}>{money(unitP)}</Text>
+                  <Text style={[styles.tdText, { textAlign: 'right' }]}>{money(unitP)}</Text>
                 </View>
                 <View style={styles.colTotal}>
-                  <Text style={[styles.tdText, { fontFamily: 'Helvetica-Bold' }]}>{money(subtotal)}</Text>
+                  <Text style={styles.tdGreen}>{money(subtotal)}</Text>
                 </View>
-
               </View>
             );
           })
         )}
 
         {/* ── Total ── */}
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>TOTAL DEL PEDIDO:</Text>
-          <Text style={styles.totalValue}>{money(total)}</Text>
+        <View style={styles.totalSection}>
+          <View style={styles.totalBox}>
+            <Text style={styles.totalLabel}>TOTAL DEL PEDIDO</Text>
+            <Text style={styles.totalValue}>{money(total)}</Text>
+          </View>
         </View>
 
         {/* ── Nota ── */}
