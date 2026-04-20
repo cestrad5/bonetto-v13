@@ -69,7 +69,7 @@ const Login = () => {
             🎀 Bonetto
           </div>
           <h2 style={{ marginTop: '0.5rem', fontWeight: '300', fontSize: '1rem', color: '#94a3b8' }}>Ventas v13 — Portal de Pedidos</h2>
-          <p style={{ marginTop: '0.25rem', fontSize: '0.65rem', color: '#334155', fontFamily: 'monospace' }}>build: pdf-proxy-images · PDF v7</p>
+          <p style={{ marginTop: '0.25rem', fontSize: '0.65rem', color: '#334155', fontFamily: 'monospace' }}>build: apple-light-theme · v8</p>
         </div>
 
         <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
