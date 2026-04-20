@@ -49,22 +49,22 @@ export const createOrder = asyncHandler(async (req, res) => {
     const row = [
       orderId,
       date,
-      finalEmail, // Column C
+      finalEmail,
       clientId,
       clientName,
       item.sku,
       item.name,
       item.qty,
       item.priceList,
-      item.discountPct,
+      item.discountPct || '',
       item.priceFinal,
       item.subtotal,
       totalOrder,
       'Pendiente',
-      note || ''
+      note || '',
+      item.imageUrl || ''  // Column P: Imagen_URL
     ];
-    
-    await appendSheetData('Pedidos!A:O', row);
+    await appendSheetData('Pedidos!A:P', row);
   }
 
   res.status(201).json({ success: true, message: 'Order created successfully' });
@@ -76,8 +76,12 @@ export const createOrder = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getOrders = asyncHandler(async (req, res) => {
-  const rows = await getSheetData('Pedidos!A:O');
+  // Expand range to A:P to include Imagen_URL column
+  const rows = await getSheetData('Pedidos!A:P');
   if (!rows || rows.length === 0) return res.json([]);
+
+  // Auto-set header for column P if not defined in the sheet
+  if (!rows[0][15]) rows[0][15] = 'Imagen_URL';
 
   const orders = mapRowsToObjects(rows);
   const { role, email } = req.user;

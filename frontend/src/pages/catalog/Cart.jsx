@@ -42,10 +42,11 @@ const Cart = () => {
         clientName: selectedClient.Nombre,
         items: cartItems.map(i => ({
           ...i,
-          sku: i.SKU,
-          name: i.Nombre,
+          sku:      i.SKU,
+          name:     i.Nombre,
           priceList: i.priceIVA,
-          subtotal: i.priceFinal * i.qty
+          subtotal: i.priceFinal * i.qty,
+          imageUrl: i.Imagen_URL || ''      // ← imagen para el PDF
         })),
         totalOrder: totalAmount,
         note: note

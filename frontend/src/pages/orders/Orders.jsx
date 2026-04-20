@@ -63,9 +63,10 @@ const OrderRow = ({ order }) => {
               ...order, 
               items: order.items.map(i => ({
                 ...i,
-                name: i.Producto_Nombre,
-                qty:  i.Qty,
-                subtotal: i.Subtotal
+                name:      i.Producto_Nombre,
+                qty:       i.Qty,
+                subtotal:  i.Subtotal,
+                Imagen_URL: i.Imagen_URL || ''
               }))
             }} />}
             fileName={`Pedido_${order.Pedido_ID}.pdf`}
