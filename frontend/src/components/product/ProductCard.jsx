@@ -210,7 +210,7 @@ const ProductCard = ({ product, discountPct = 0 }) => {
               background: 'var(--accent)', color: 'white', border: 'none',
               borderRadius: 'var(--radius)', fontWeight: '600', fontSize: '0.84rem',
               cursor: 'pointer', transition: 'opacity 0.15s',
-              boxShadow: '0 2px 8px rgba(99,102,241,0.28)',
+              boxShadow: '0 2px 8px rgba(61,43,31,0.25)',
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}

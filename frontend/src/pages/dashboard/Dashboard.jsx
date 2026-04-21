@@ -207,11 +207,11 @@ const Dashboard = () => {
                         <button title="Descargar PDF" style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           width: '32px', height: '32px',
-                          background: 'var(--accent-soft)', border: '1.5px solid rgba(99,102,241,0.2)',
+                          background: 'var(--accent-soft)', border: '1.5px solid var(--accent-soft)',
                           borderRadius: 'var(--radius-sm)', color: 'var(--accent)',
                           cursor: 'pointer', transition: 'background 0.15s',
                         }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(99,102,241,0.15)'}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(61,43,31,0.15)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'var(--accent-soft)'}
                         >
                           <FileText size={14} />

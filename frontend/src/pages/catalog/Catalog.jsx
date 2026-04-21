@@ -60,7 +60,6 @@ const Catalog = () => {
           value={selectedClient?.ID || ''}
           onChange={handleClientChange}
           className="input-field"
-          style={{ background: 'rgba(30,41,59,0.7)' }}
         >
           <option value="">👤 Seleccionar cliente (precio de lista)</option>
           {clients.map(c => (

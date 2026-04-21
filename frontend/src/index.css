@@ -12,9 +12,9 @@
   --border:      #e5e5ea;
   --border-dark: #d2d2d7;
 
-  --accent:      #6366f1;
-  --accent2:     #a855f7;
-  --accent-soft: rgba(99,102,241,0.08);
+  --accent:      #3d2b1f; /* Dark Pine Brown */
+  --accent2:     #5d4037;
+  --accent-soft: rgba(61, 43, 31, 0.08);
 
   --green:       #10b981;
   --green-soft:  rgba(16,185,129,0.1);
@@ -54,6 +54,12 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   background-color: var(--bg-subtle);
+  /* Pine Wood Background */
+  background-image: url('/fondo.jpg');
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 #root {

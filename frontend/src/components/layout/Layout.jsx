@@ -35,8 +35,7 @@ const Layout = ({ children }) => {
 
           <span style={{
             fontSize: '1.1rem', fontWeight: '800',
-            background: 'linear-gradient(135deg, #6366f1, #a855f7)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            color: 'var(--accent)',
           }}>🎀 Bonetto</span>
 
           <button

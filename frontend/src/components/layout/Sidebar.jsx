@@ -89,7 +89,7 @@ const Sidebar = ({ onClose }) => {
           {/* Avatar */}
           <div style={{
             width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-            background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+            background: 'var(--accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontWeight: '700', fontSize: '0.9rem', color: 'white',
           }}>
