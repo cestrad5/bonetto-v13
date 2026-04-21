@@ -33,10 +33,7 @@ const Layout = ({ children }) => {
             <Menu size={24} />
           </button>
 
-          <span style={{
-            fontSize: '1.1rem', fontWeight: '800',
-            color: 'var(--accent)',
-          }}>🎀 Bonetto</span>
+          <div style={{ flex: 1 }} />
 
           <button
             className="hamburger cart-badge"

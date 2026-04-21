@@ -140,12 +140,13 @@ a { text-decoration: none; color: inherit; }
   justify-content: space-between;
   padding: 0 16px;
   height: var(--topbar-h);
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: var(--shadow-xs);
 }
 
 .hamburger {
@@ -301,7 +302,7 @@ a { text-decoration: none; color: inherit; }
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--bg-card);
+  border: 2px solid white;
 }
 
 /* ─── SECTION HEADER ─────────────────────────────── */
