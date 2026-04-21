@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import { loginWithGoogle, loginWithEmail } from '../../services/authService';
 import { SET_LOGIN, SET_USER, SET_TOKEN, SET_LOADING, selectIsLoading } from '../../redux/features/authSlice';
-import { LogIn, Mail } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -50,26 +50,24 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+    <div className="login-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', padding: '20px' }}>
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="glass-card" 
-        style={{ width: '100%', maxWidth: '400px', textAlign: 'center' }}
+        style={{ width: '100%', maxWidth: '400px', textAlign: 'center', background: 'white', boxShadow: 'var(--shadow-lg)' }}
       >
         <div style={{ marginBottom: '2rem' }}>
-          <div style={{ 
-            fontSize: '1.8rem', 
-            fontWeight: '800', 
-            background: 'linear-gradient(135deg, #6366f1, #a855f7)', 
-            WebkitBackgroundClip: 'text', 
-            WebkitTextFillColor: 'transparent',
-            letterSpacing: '-1px'
-          }}>
-            🎀 Bonetto
+          <div style={{ marginBottom: '1.2rem', display: 'flex', justifyContent: 'center' }}>
+            <img 
+              src="/logo.png" 
+              alt="Bonetto" 
+              style={{ height: '54px', width: 'auto', objectFit: 'contain' }}
+              onError={(e) => e.target.style.display = 'none'}
+            />
           </div>
-          <h2 style={{ marginTop: '0.5rem', fontWeight: '300', fontSize: '1rem', color: '#94a3b8' }}>Ventas v13 — Portal de Pedidos</h2>
-          <p style={{ marginTop: '0.25rem', fontSize: '0.65rem', color: '#334155', fontFamily: 'monospace' }}>build: pine-wood-theme · v9</p>
+          <h2 style={{ marginTop: '0.5rem', fontWeight: '600', fontSize: '1rem', color: 'var(--text-main)' }}>Ventas v13 — Portal de Pedidos</h2>
+          <p style={{ marginTop: '0.25rem', fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>build: pine-wood-theme · v9</p>
         </div>
 
         <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -78,26 +76,31 @@ const Login = () => {
             placeholder="Email" 
             value={email} 
             onChange={(e) => setEmail(e.target.value)}
-            style={{ padding: '12px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: 'white' }}
+            className="input-field"
           />
           <input 
             type="password" 
             placeholder="Contraseña" 
             value={password} 
             onChange={(e) => setPassword(e.target.value)}
-            style={{ padding: '12px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: 'white' }}
+            className="input-field"
           />
-          <button type="submit" disabled={isLoading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'linear-gradient(135deg, #6366f1, #a855f7)', color: 'white', fontWeight: '600' }}>
-            <LogIn size={20} /> {isLoading ? 'Cargando...' : 'Entrar'}
+          <button type="submit" disabled={isLoading} className="btn-primary" style={{ height: '48px' }}>
+            <LogIn size={19} /> {isLoading ? 'Cargando...' : 'Entrar'}
           </button>
         </form>
 
-        <div style={{ margin: '1.5rem 0', display: 'flex', alignItems: 'center', gap: '10px', color: '#64748b' }}>
-          <hr style={{ flex: 1, border: '0.5px solid #334155' }} /> o <hr style={{ flex: 1, border: '0.5px solid #334155' }} />
+        <div style={{ margin: '1.5rem 0', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-dim)', fontSize: '0.85rem' }}>
+          <hr style={{ flex: 1, border: 'none', borderTop: '1px solid var(--border)' }} /> o <hr style={{ flex: 1, border: 'none', borderTop: '1px solid var(--border)' }} />
         </div>
 
-        <button onClick={handleGoogleLogin} disabled={isLoading} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', border: '1px solid #334155', background: 'transparent' }}>
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="Google" />
+        <button 
+          onClick={handleGoogleLogin} 
+          disabled={isLoading} 
+          className="btn-ghost" 
+          style={{ width: '100%', height: '46px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google" />
           Continuar con Google
         </button>
       </motion.div>
