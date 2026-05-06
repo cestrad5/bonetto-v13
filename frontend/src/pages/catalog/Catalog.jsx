@@ -9,6 +9,7 @@ const Catalog = () => {
   const [products, setProducts] = useState([]);
   const [clients, setClients] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [loading, setLoading] = useState(true);
   
   const dispatch = useDispatch();
@@ -32,11 +33,19 @@ const Catalog = () => {
     fetchData();
   }, []);
 
-  const filteredProducts = products.filter(p => 
-    p.Nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.SKU.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.Categoría.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Extract unique categories
+  const categories = ['Todos', ...new Set(products.map(p => p.Categoría).filter(Boolean))];
+
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = 
+      p.Nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.SKU.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.Categoría.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = selectedCategory === 'Todos' || p.Categoría === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   const handleClientChange = (e) => {
     const clientId = e.target.value;
@@ -69,19 +78,34 @@ const Catalog = () => {
       </div>
 
       {/* Search */}
-      <div style={{ position: 'relative', marginBottom: '24px' }}>
+      <div style={{ position: 'relative', marginBottom: '20px' }}>
         <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }}>
           🔍
         </span>
         <input
           type="text"
-          placeholder="Buscar por nombre, SKU o categoría..."
+          placeholder="Buscar por nombre o SKU..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="input-field"
           style={{ paddingLeft: '42px' }}
         />
       </div>
+
+      {/* Category Filter */}
+      {!loading && products.length > 0 && (
+        <div className="category-filter">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              className={`category-chip ${selectedCategory === cat ? 'active' : ''}`}
+              onClick={() => setSelectedCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Grid */}
       {loading ? (
@@ -92,7 +116,7 @@ const Catalog = () => {
       ) : filteredProducts.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>
           <p style={{ fontSize: '2rem' }}>📦</p>
-          <p>Sin resultados para "<strong>{searchTerm}</strong>"</p>
+          <p>Sin resultados para la búsqueda</p>
         </div>
       ) : (
         <div className="catalog-grid">
@@ -107,6 +131,7 @@ const Catalog = () => {
       )}
     </div>
   );
+
 
 };
 
