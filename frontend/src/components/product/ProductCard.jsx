@@ -4,15 +4,22 @@ import { ADD_TO_CART } from '../../redux/features/cartSlice';
 import { ShoppingCart, Plus, Minus } from 'lucide-react';
 import { toast } from 'react-toastify';
 
-const ProductCard = ({ product, discountPct = 0 }) => {
+const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
   const dispatch = useDispatch();
   const [qty, setQty] = useState(1);
   const [imgErr, setImgErr] = useState(false);
 
   const priceIVA     = parseFloat(String(product.Precio_IVA    || '0').replace(/[^0-9.-]+/g, '')) || 0;
   const priceSinIVA  = parseFloat(String(product.Precio_sinIVA || '0').replace(/[^0-9.-]+/g, '')) || 0;
-  const discountAmt  = priceIVA * (discountPct / 100);
-  const priceFinal   = priceIVA - discountAmt;
+  
+  // Si hay precio especial, lo usamos. Si no, aplicamos el descuento general.
+  const isSpecialPrice = specialPrice !== null && specialPrice > 0;
+  const priceFinal     = isSpecialPrice ? specialPrice : (priceIVA - (priceIVA * (discountPct / 100)));
+  
+  // Calculamos el porcentaje real de ahorro para mostrarlo si es precio especial
+  const effectiveDiscountPct = isSpecialPrice 
+    ? Math.round(((priceIVA - priceFinal) / priceIVA) * 100)
+    : discountPct;
 
   const handleAddToCart = () => {
     dispatch(ADD_TO_CART({
@@ -85,14 +92,15 @@ const ProductCard = ({ product, discountPct = 0 }) => {
         )}
 
         {/* Discount badge */}
-        {discountPct > 0 && (
+        {effectiveDiscountPct > 0 && (
           <span style={{
             position: 'absolute', top: '10px', right: '10px',
-            background: 'var(--red)', color: 'white',
+            background: isSpecialPrice ? 'var(--accent)' : 'var(--red)', color: 'white',
             padding: '3px 9px', borderRadius: '99px',
             fontSize: '0.72rem', fontWeight: '700',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
           }}>
-            -{discountPct}%
+            {isSpecialPrice ? '⭐ ACUERDO' : `-${effectiveDiscountPct}%`}
           </span>
         )}
       </div>
@@ -136,17 +144,21 @@ const ProductCard = ({ product, discountPct = 0 }) => {
         {/* Spacer */}
         <div style={{ flex: 1 }} />
 
-        {/* Prices */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
           <span style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--green)', letterSpacing: '-0.02em' }}>
             ${priceFinal.toLocaleString('es-CO')}
           </span>
-          {discountPct > 0 && (
+          {(effectiveDiscountPct > 0) && (
             <span style={{ fontSize: '0.82rem', color: 'var(--text-dim)', textDecoration: 'line-through' }}>
               ${priceIVA.toLocaleString('es-CO')}
             </span>
           )}
         </div>
+        {isSpecialPrice && (
+          <p style={{ margin: '-4px 0 0 0', fontSize: '0.65rem', color: 'var(--accent)', fontWeight: '700' }}>
+            ✨ PRECIO DE ACUERDO ESPECIAL
+          </p>
+        )}
         {priceSinIVA > 0 && (
           <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--text-dim)' }}>
             Sin IVA: ${priceSinIVA.toLocaleString('es-CO')}

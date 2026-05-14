@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 const Catalog = () => {
   const [products, setProducts] = useState([]);
   const [clients, setClients] = useState([]);
+  const [specialPrices, setSpecialPrices] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [loading, setLoading] = useState(true);
@@ -18,14 +19,17 @@ const Catalog = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prodRes, clientRes] = await Promise.all([
+        const [prodRes, clientRes, specialRes] = await Promise.all([
           api.get('/api/products'),
-          api.get('/api/clients')
+          api.get('/api/clients'),
+          api.get('/api/products/special-prices')
         ]);
         setProducts(prodRes.data);
         setClients(clientRes.data);
+        setSpecialPrices(specialRes.data);
       } catch (error) {
         toast.error('Error al cargar datos');
+        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -120,13 +124,19 @@ const Catalog = () => {
         </div>
       ) : (
         <div className="catalog-grid">
-          {filteredProducts.map(product => (
-            <ProductCard
-              key={product.SKU}
-              product={product}
-              discountPct={selectedClient ? parseFloat(selectedClient.Descuento_Pct) || 0 : 0}
-            />
-          ))}
+          {filteredProducts.map(product => {
+            const specialPriceData = specialPrices.find(
+              sp => String(sp.ID_Cliente) === String(selectedClient?.ID) && String(sp.SKU) === String(product.SKU)
+            );
+            return (
+              <ProductCard
+                key={product.SKU}
+                product={product}
+                discountPct={selectedClient ? parseFloat(selectedClient.Descuento_Pct) || 0 : 0}
+                specialPrice={specialPriceData ? parseFloat(String(specialPriceData.Precio_Acordado).replace(/[^0-9.-]+/g, '')) : null}
+              />
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getProducts, refreshProducts } from '../controllers/productController.js';
+import { getProducts, getSpecialPrices, refreshProducts } from '../controllers/productController.js';
 import { getClients } from '../controllers/clientController.js';
 import { createOrder, getOrders, debugSheet } from '../controllers/orderController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
@@ -9,6 +9,7 @@ const router = express.Router();
 
 // Products
 router.get('/products', getProducts);
+router.get('/products/special-prices', protect, getSpecialPrices);
 router.post('/products/refresh', protect, adminOnly, refreshProducts);
 
 // Clients
