@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// Deploy Ping: 2026-05-14 - Testing SSH connectivity
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../services/api';
 import ProductCard from '../../components/product/ProductCard';
