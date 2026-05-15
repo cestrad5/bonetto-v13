@@ -159,9 +159,9 @@ const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
             ✨ PRECIO DE ACUERDO ESPECIAL
           </p>
         )}
-        {priceSinIVA > 0 && (
-          <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--text-dim)' }}>
-            Sin IVA: ${priceSinIVA.toLocaleString('es-CO')}
+        {product.Cod_Barras && (
+          <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--text-dim)', fontFamily: 'monospace' }}>
+            {product.Cod_Barras}
           </p>
         )}
 
