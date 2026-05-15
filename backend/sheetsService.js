@@ -36,7 +36,7 @@ export const getSheetData = async (range) => {
  */
 export const mapRowsToObjects = (rows) => {
   if (!rows || rows.length === 0) return [];
-  const headers = rows[0];
+  const headers = rows[0].map(h => String(h).trim()); // trim whitespace/newlines from headers
   return rows.slice(1).map((row) => {
     const obj = {};
     headers.forEach((header, index) => {
