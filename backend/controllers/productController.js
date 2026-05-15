@@ -43,6 +43,12 @@ export const getSpecialPrices = asyncHandler(async (req, res) => {
     setCache(cacheKey, specialPrices, 300); // 5 min cache
   }
 
+  // FILTRO DE SEGURIDAD: Si es cliente, solo ve sus precios
+  if (req.user.role === 'Cliente') {
+    const myPrices = specialPrices.filter(sp => String(sp.ID_Cliente) === String(req.user.clientId));
+    return res.json(myPrices);
+  }
+
   res.json(specialPrices);
 });
 

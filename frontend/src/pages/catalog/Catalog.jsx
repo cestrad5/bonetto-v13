@@ -15,7 +15,9 @@ const Catalog = () => {
   const [loading, setLoading] = useState(true);
   
   const dispatch = useDispatch();
+  const { user } = useSelector(state => state.auth);
   const selectedClient = useSelector(selectSelectedClient);
+  const isClient = user?.role === 'Cliente';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,6 +30,12 @@ const Catalog = () => {
         setProducts(prodRes.data);
         setClients(clientRes.data);
         setSpecialPrices(specialRes.data);
+
+        // AUTO-SELECCIÓN: Si es cliente, fijar su propio ID
+        if (user?.role === 'Cliente' && user?.clientId) {
+          const myClient = clientRes.data.find(c => String(c.ID) === String(user.clientId));
+          if (myClient) dispatch(SET_CLIENT(myClient));
+        }
       } catch (error) {
         toast.error('Error al cargar datos');
         console.error(error);
@@ -36,7 +44,7 @@ const Catalog = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [user, dispatch]);
 
   // Extract unique categories
   const categories = ['Todos', ...new Set(products.map(p => p.Categoría).filter(Boolean))];
@@ -68,18 +76,25 @@ const Catalog = () => {
         </p>
       </div>
 
-      {/* Client selector */}
-      <div style={{ marginBottom: '14px' }}>
-        <select
-          value={selectedClient?.ID || ''}
-          onChange={handleClientChange}
-          className="input-field"
-        >
-          <option value="">👤 Seleccionar cliente (precio de lista)</option>
-          {clients.map(c => (
-            <option key={c.ID} value={c.ID}>{c.Nombre} — {c.Descuento_Pct}% dcto.</option>
-          ))}
-        </select>
+      {/* Toolbar */}
+      <div style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
+        
+        {/* Lógica: Si es cliente, no mostramos el selector */}
+        {!isClient && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'white', padding: '0.5rem 1rem', borderRadius: '12px', boxShadow: 'var(--shadow-sm)' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-muted)' }}>Cliente:</span>
+            <select 
+              value={selectedClient?.ID || ''} 
+              onChange={handleClientChange}
+              style={{ border: 'none', outline: 'none', background: 'transparent', fontWeight: '600', color: 'var(--primary)', cursor: 'pointer' }}
+            >
+              <option value="">Seleccionar Cliente...</option>
+              {clients.map(c => (
+                <option key={c.ID} value={c.ID}>{c.Nombre}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Search */}

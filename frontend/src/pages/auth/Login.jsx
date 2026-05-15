@@ -22,7 +22,8 @@ const Login = () => {
       dispatch(SET_TOKEN(userData.token));
       dispatch(SET_LOGIN(true));
       toast.success(`Bienvenido, ${userData.name}`);
-      navigate('/dashboard');
+      const target = userData.role === 'Cliente' ? '/catalog' : '/dashboard';
+      navigate(target);
     } catch (error) {
       toast.error('Error al iniciar sesión con Google');
     } finally {
@@ -41,7 +42,8 @@ const Login = () => {
       dispatch(SET_TOKEN(userData.token));
       dispatch(SET_LOGIN(true));
       toast.success(`Bienvenido, ${userData.name}`);
-      navigate('/dashboard');
+      const target = userData.role === 'Cliente' ? '/catalog' : '/dashboard';
+      navigate(target);
     } catch (error) {
       toast.error('Credenciales incorrectas');
     } finally {

@@ -40,6 +40,12 @@ export const createOrder = asyncHandler(async (req, res) => {
   // Fallback to authenticated user email if frontend didn't send it
   const finalEmail = userEmail || req.user.email;
 
+  // SEGURIDAD: Si es cliente, forzar su propio clientId y omitir lo que venga del body
+  let finalClientId = clientId;
+  if (req.user.role === 'Cliente') {
+    finalClientId = req.user.clientId;
+  }
+
   if (!items || items.length === 0) {
     res.status(400);
     throw new Error('No items in order');
@@ -50,7 +56,7 @@ export const createOrder = asyncHandler(async (req, res) => {
       orderId,
       date,
       finalEmail,
-      clientId,
+      finalClientId,
       clientName,
       item.sku,
       item.name,
@@ -84,13 +90,22 @@ export const getOrders = asyncHandler(async (req, res) => {
   if (!rows[0][15]) rows[0][15] = 'Imagen_URL';
 
   const orders = mapRowsToObjects(rows);
-  const { role, email } = req.user;
+  const { role, email, clientId } = req.user;
 
+  // 1. Admin y Producción ven todo
   if (role === 'Admin' || role === 'Produccion') {
     return res.json(orders);
   }
 
-  // Column C header is confirmed: "Usuario_Email"
+  // 2. Si es un Cliente, solo ve los pedidos asociados a su ID_Cliente
+  if (role === 'Cliente') {
+    const filtered = orders.filter(o => 
+      String(o.ID_Cliente) === String(clientId)
+    );
+    return res.json(filtered);
+  }
+
+  // 3. Vendedores (rol Vendedor u otros) ven solo los pedidos que ellos mismos crearon
   const filtered = orders.filter(o =>
     o.Usuario_Email && o.Usuario_Email.toLowerCase() === email.toLowerCase()
   );

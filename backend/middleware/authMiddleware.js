@@ -24,7 +24,8 @@ export const protect = asyncHandler(async (req, res, next) => {
         uid: decoded.uid,
         email: decoded.email,
         role: user.Rol,
-        name: user.Nombre
+        name: user.Nombre,
+        clientId: user.ID_Cliente || null // NUEVO: Asociar cliente a usuario
       };
 
       next();

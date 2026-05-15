@@ -35,7 +35,11 @@ const Sidebar = ({ onClose }) => {
       ),
     },
     { name: 'Mis Pedidos', path: '/orders', icon: <ClipboardList size={19} /> },
-  ];
+  ].filter(item => {
+    // Si es cliente, no ve el Dashboard
+    if (user?.role === 'Cliente' && item.name === 'Dashboard') return false;
+    return true;
+  });
 
   if (user?.role === 'Admin') {
     navItems.push({ name: 'Admin', path: '/admin', icon: <Settings size={19} /> });
