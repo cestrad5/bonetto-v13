@@ -389,11 +389,34 @@ a { text-decoration: none; color: inherit; }
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding: 8px 4px;
+  padding: 10px 4px;
   margin-bottom: 20px;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
+
+  /* ── Sticky: siempre visible al hacer scroll ── */
+  position: sticky;
+  top: calc(var(--topbar-h) + 4px); /* mobile: debajo del topbar */
+  z-index: 50;
+
+  /* Fondo glassmorphism para que el contenido no se vea a través */
+  background: rgba(245, 245, 247, 0.80);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(229, 229, 234, 0.5);
+  margin-left: -4px;
+  margin-right: -4px;
+  padding-left: 4px;
+  padding-right: 4px;
+  border-radius: var(--radius);
 }
+
+@media (min-width: 1024px) {
+  .category-filter {
+    top: 0; /* desktop: no hay topbar, pegar al tope del contenido */
+  }
+}
+
 .category-filter::-webkit-scrollbar {
   display: none; /* Chrome/Safari */
 }

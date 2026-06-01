@@ -49,21 +49,25 @@ const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
         boxShadow: 'var(--shadow-xs)',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.transform   = 'translateY(-3px)';
-        e.currentTarget.style.boxShadow   = 'var(--shadow-md)';
+        e.currentTarget.style.transform = 'translateY(-3px)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+        const img = e.currentTarget.querySelector('img');
+        if (img) img.style.transform = 'scale(1.08)';
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.transform   = 'translateY(0)';
-        e.currentTarget.style.boxShadow   = 'var(--shadow-xs)';
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-xs)';
+        const img = e.currentTarget.querySelector('img');
+        if (img) img.style.transform = 'scale(1)';
       }}
     >
       {/* ── Image: fixed height, always fits ── */}
       <div style={{
         position: 'relative',
         width: '100%',
-        height: '200px',        /* fixed height so all cards are uniform */
+        height: '200px',
         overflow: 'hidden',
-        background: 'var(--bg-subtle)',
+        background: '#ffffff',   /* white = blends with product photo backgrounds */
         flexShrink: 0,
       }}>
         {!imgErr && product.Imagen_URL ? (
@@ -75,8 +79,8 @@ const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'contain',   /* contain = always visible without crop */
-              padding: '8px',
+              objectFit: 'contain',
+              padding: '0',           /* sin padding: la imagen usa todo el espacio */
               transition: 'transform 0.4s ease',
             }}
           />
