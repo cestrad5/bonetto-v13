@@ -64,7 +64,6 @@ body {
 
 #root {
   width: 100%;
-  overflow-x: hidden;
 }
 
 img { max-width: 100%; display: block; }
@@ -386,39 +385,37 @@ a { text-decoration: none; color: inherit; }
 }
 /* ─── CATEGORY FILTER ───────────────────────────── */
 .category-filter {
+  position: sticky;
+  top: var(--topbar-h); /* mobile: debajo del topbar */
+  z-index: 100;
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding: 10px 4px;
-  margin-bottom: 20px;
+  padding: 12px 16px;
+  margin: 0 -16px 20px -16px; /* bleed to edges on mobile */
   scrollbar-width: none;
   -ms-overflow-style: none;
-  /* sin position:sticky — lo gestionamos via JS */
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 .category-filter::-webkit-scrollbar { display: none; }
 
-/* Estado fijo: activado por JS cuando la barra se va del viewport */
-.category-filter--fixed {
-  position: fixed;
-  top: var(--topbar-h);   /* mobile: debajo del topbar */
-  left: 0;
-  right: 0;
-  z-index: 100;
-  padding: 10px 16px;
-  margin: 0;
-  border-radius: 0;
-  background: rgba(245, 245, 247, 0.90);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(229, 229, 234, 0.6);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+@media (min-width: 640px) {
+  .category-filter {
+    margin: 0 -24px 20px -24px;
+    padding: 12px 24px;
+  }
 }
 
 @media (min-width: 1024px) {
-  .category-filter--fixed {
-    top: 0;                      /* desktop: sin topbar */
-    left: var(--sidebar-w);      /* desktop: respetar sidebar */
-    padding: 10px 36px;
+  .category-filter {
+    top: 0; /* desktop: sin topbar */
+    margin: 0 -36px 20px -36px;
+    padding: 12px 36px;
   }
 }
 

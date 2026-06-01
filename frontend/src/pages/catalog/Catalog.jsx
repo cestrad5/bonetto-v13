@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 // Deploy Ping: 2026-05-14 - Testing SSH connectivity
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../services/api';
@@ -14,30 +14,7 @@ const Catalog = () => {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [loading, setLoading] = useState(true);
 
-  // ── Sticky category bar via scroll listener ──────────
-  const [catFixed, setCatFixed] = useState(false);
-  const [catBarHeight, setCatBarHeight] = useState(0);
-  const sentinelRef = useRef(null);  // ghost div justo antes de la barra
-  const catBarRef   = useRef(null);  // la barra real
 
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    const bar      = catBarRef.current;
-    if (!sentinel || !bar) return;
-
-    // Guardar la altura real para el placeholder
-    setCatBarHeight(bar.offsetHeight);
-
-    const handleScroll = () => {
-      const rect = sentinel.getBoundingClientRect();
-      // En mobile el topbar mide 60px (--topbar-h); en desktop 0
-      const offset = window.innerWidth >= 1024 ? 0 : 64;
-      setCatFixed(rect.top < offset);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [loading]); // re-bind cuando termina de cargar (el sentinel ya está en el DOM)
 
   const dispatch = useDispatch();
   const { user } = useSelector(state => state.auth);
@@ -150,23 +127,11 @@ const Catalog = () => {
         />
       </div>
 
-      {/* Category Filter — punto de anclaje + barra */}
+      {/* Category Filter */}
       {!loading && products.length > 0 && (
-        <>
-          {/* Sentinel: ghost div justo donde empieza la barra en el flujo normal */}
-          <div ref={sentinelRef} style={{ height: 0 }} />
-
-          {/* Placeholder: mantiene el espacio cuando la barra pasa a fixed */}
-          {catFixed && <div style={{ height: catBarHeight || 54 }} />}
-
-          {/* La barra real: recibe la clase --fixed cuando el sentinel sale del viewport */}
-          <div
-            ref={catBarRef}
-            className={`category-filter${catFixed ? ' category-filter--fixed' : ''}`}
-          >
-            <CategoryChips />
-          </div>
-        </>
+        <div className="category-filter">
+          <CategoryChips />
+        </div>
       )}
 
       {/* Grid */}

@@ -22,7 +22,7 @@ const Login = () => {
       dispatch(SET_TOKEN(userData.token));
       dispatch(SET_LOGIN(true));
       toast.success(`Bienvenido, ${userData.name}`);
-      const target = userData.role === 'Cliente' ? '/catalog' : '/dashboard';
+      const target = userData.role?.trim().toLowerCase() === 'cliente' ? '/catalog' : '/dashboard';
       navigate(target);
     } catch (error) {
       toast.error('Error al iniciar sesión con Google');
