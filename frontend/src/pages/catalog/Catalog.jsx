@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 // Deploy Ping: 2026-05-14 - Testing SSH connectivity
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../services/api';
@@ -13,11 +13,36 @@ const Catalog = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [loading, setLoading] = useState(true);
-  
+
+  // ── Sticky category bar via scroll listener ──────────
+  const [catFixed, setCatFixed] = useState(false);
+  const [catBarHeight, setCatBarHeight] = useState(0);
+  const sentinelRef = useRef(null);  // ghost div justo antes de la barra
+  const catBarRef   = useRef(null);  // la barra real
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    const bar      = catBarRef.current;
+    if (!sentinel || !bar) return;
+
+    // Guardar la altura real para el placeholder
+    setCatBarHeight(bar.offsetHeight);
+
+    const handleScroll = () => {
+      const rect = sentinel.getBoundingClientRect();
+      // En mobile el topbar mide 60px (--topbar-h); en desktop 0
+      const offset = window.innerWidth >= 1024 ? 0 : 64;
+      setCatFixed(rect.top < offset);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loading]); // re-bind cuando termina de cargar (el sentinel ya está en el DOM)
+
   const dispatch = useDispatch();
   const { user } = useSelector(state => state.auth);
   const selectedClient = useSelector(selectSelectedClient);
-  const isClient = user?.role === 'Cliente';
+  const isClient = user?.role?.trim().toLowerCase() === 'cliente';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +57,7 @@ const Catalog = () => {
         setSpecialPrices(specialRes.data);
 
         // AUTO-SELECCIÓN: Si es cliente, fijar su propio ID
-        if (user?.role === 'Cliente' && user?.clientId) {
+        if (isClient && user?.clientId) {
           const myClient = clientRes.data.find(c => String(c.ID) === String(user.clientId));
           if (myClient) dispatch(SET_CLIENT(myClient));
         }
@@ -50,13 +75,13 @@ const Catalog = () => {
   const categories = ['Todos', ...new Set(products.map(p => p.Categoría).filter(Boolean))];
 
   const filteredProducts = products.filter(p => {
-    const matchesSearch = 
+    const matchesSearch =
       p.Nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.SKU.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.Categoría.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesCategory = selectedCategory === 'Todos' || p.Categoría === selectedCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -65,6 +90,21 @@ const Catalog = () => {
     const client = clients.find(c => c.ID === clientId);
     dispatch(SET_CLIENT(client || null));
   };
+
+  // Chips de categoría reutilizables
+  const CategoryChips = () => (
+    <>
+      {categories.map(cat => (
+        <button
+          key={cat}
+          className={`category-chip ${selectedCategory === cat ? 'active' : ''}`}
+          onClick={() => setSelectedCategory(cat)}
+        >
+          {cat}
+        </button>
+      ))}
+    </>
+  );
 
   return (
     <div>
@@ -76,15 +116,13 @@ const Catalog = () => {
         </p>
       </div>
 
-      {/* Toolbar */}
+      {/* Toolbar — selector de cliente (solo vendedores/admin) */}
       <div style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
-        
-        {/* Lógica: Si es cliente, no mostramos el selector */}
         {!isClient && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'white', padding: '0.5rem 1rem', borderRadius: '12px', boxShadow: 'var(--shadow-sm)' }}>
             <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-muted)' }}>Cliente:</span>
-            <select 
-              value={selectedClient?.ID || ''} 
+            <select
+              value={selectedClient?.ID || ''}
               onChange={handleClientChange}
               style={{ border: 'none', outline: 'none', background: 'transparent', fontWeight: '600', color: 'var(--primary)', cursor: 'pointer' }}
             >
@@ -112,19 +150,23 @@ const Catalog = () => {
         />
       </div>
 
-      {/* Category Filter */}
+      {/* Category Filter — punto de anclaje + barra */}
       {!loading && products.length > 0 && (
-        <div className="category-filter">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              className={`category-chip ${selectedCategory === cat ? 'active' : ''}`}
-              onClick={() => setSelectedCategory(cat)}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        <>
+          {/* Sentinel: ghost div justo donde empieza la barra en el flujo normal */}
+          <div ref={sentinelRef} style={{ height: 0 }} />
+
+          {/* Placeholder: mantiene el espacio cuando la barra pasa a fixed */}
+          {catFixed && <div style={{ height: catBarHeight || 54 }} />}
+
+          {/* La barra real: recibe la clase --fixed cuando el sentinel sale del viewport */}
+          <div
+            ref={catBarRef}
+            className={`category-filter${catFixed ? ' category-filter--fixed' : ''}`}
+          >
+            <CategoryChips />
+          </div>
+        </>
       )}
 
       {/* Grid */}
@@ -157,8 +199,6 @@ const Catalog = () => {
       )}
     </div>
   );
-
-
 };
 
 export default Catalog;
