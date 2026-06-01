@@ -97,8 +97,7 @@ export const getOrders = asyncHandler(async (req, res) => {
     return res.json(orders);
   }
 
-  // 2. Si es un Cliente, solo ve los pedidos asociados a su ID_Cliente
-  if (role?.trim().toLowerCase() === 'cliente') {
+  if (role && role.trim().toLowerCase() === 'cliente') {
     const filtered = orders.filter(o => 
       String(o.ID_Cliente || '').trim().toLowerCase() === String(clientId || '').trim().toLowerCase()
     );
