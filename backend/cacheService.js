@@ -7,7 +7,10 @@ dotenv.config();
 const ttl = parseInt(process.env.PRODUCTS_CACHE_TTL) || 3600;
 const cache = new NodeCache({ stdTTL: ttl, checkperiod: ttl * 0.2 });
 
-export const setCache = (key, data) => {
+export const setCache = (key, data, ttl) => {
+  if (ttl !== undefined) {
+    return cache.set(key, data, ttl);
+  }
   return cache.set(key, data);
 };
 

@@ -149,7 +149,8 @@ const Catalog = () => {
         <div className="catalog-grid">
           {filteredProducts.map(product => {
             const specialPriceData = specialPrices.find(
-              sp => String(sp.ID_Cliente) === String(selectedClient?.ID) && String(sp.SKU) === String(product.SKU)
+              sp => String(sp.ID_Cliente || '').trim().toLowerCase() === String(selectedClient?.ID || '').trim().toLowerCase() &&
+                    String(sp.SKU || '').trim().toLowerCase() === String(product.SKU || '').trim().toLowerCase()
             );
             return (
               <ProductCard

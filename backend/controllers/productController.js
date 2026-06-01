@@ -44,8 +44,10 @@ export const getSpecialPrices = asyncHandler(async (req, res) => {
   }
 
   // FILTRO DE SEGURIDAD: Si es cliente, solo ve sus precios
-  if (req.user.role === 'Cliente') {
-    const myPrices = specialPrices.filter(sp => String(sp.ID_Cliente) === String(req.user.clientId));
+  if (req.user.role?.trim().toLowerCase() === 'cliente') {
+    const myPrices = specialPrices.filter(
+      sp => String(sp.ID_Cliente || '').trim().toLowerCase() === String(req.user.clientId || '').trim().toLowerCase()
+    );
     return res.json(myPrices);
   }
 
