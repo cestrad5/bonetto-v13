@@ -11,7 +11,7 @@ export const protect = asyncHandler(async (req, res, next) => {
       const decoded = await verifyToken(token);
 
       // Fetch user role and status from Sheets
-      const rows = await getSheetData('Usuarios!A:G');
+      const rows = await getSheetData('Usuarios!A:Z');
       const users = mapRowsToObjects(rows);
       const user = users.find(u => u.Email === decoded.email);
 
