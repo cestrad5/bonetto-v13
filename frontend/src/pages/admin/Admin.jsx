@@ -3,8 +3,7 @@ import { useSelector } from 'react-redux';
 import { selectUser } from '../../redux/features/authSlice';
 import api from '../../services/api';
 import { RefreshCw, ClipboardList, Package, FileText, ChevronDown } from 'lucide-react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import OrderPDF from '../../components/pdf/OrderPDF';
+import DownloadPDFButton from '../../components/pdf/DownloadPDFButton';
 import { toast } from 'react-toastify';
 
 const ESTADOS = ['Pendiente', 'En Producción', 'Listo', 'Despachado'];
@@ -199,22 +198,27 @@ const Admin = () => {
                         </span>
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        <PDFDownloadLink
-                          document={<OrderPDF order={{ ...order, items: itemsOfOrder }} />}
+                        <DownloadPDFButton
+                          order={order}
+                          items={itemsOfOrder}
                           fileName={`Pedido_${order.Pedido_ID}.pdf`}
-                          style={{ textDecoration: 'none' }}
                         >
-                          {() => (
-                            <button title="Descargar PDF" style={{
-                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                              width: '30px', height: '30px',
-                              background: 'var(--accent-soft)', border: '1.5px solid rgba(99,102,241,0.2)',
-                              borderRadius: 'var(--radius-sm)', color: 'var(--accent)', cursor: 'pointer',
-                            }}>
-                              <FileText size={13} />
+                          {({ loading, handleDownload }) => (
+                            <button
+                              onClick={handleDownload}
+                              disabled={loading}
+                              title="Descargar PDF"
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                width: '30px', height: '30px',
+                                background: 'var(--accent-soft)', border: '1.5px solid rgba(99,102,241,0.2)',
+                                borderRadius: 'var(--radius-sm)', color: 'var(--accent)', cursor: 'pointer',
+                              }}
+                            >
+                              <FileText size={13} style={{ opacity: loading ? 0.5 : 1 }} />
                             </button>
                           )}
-                        </PDFDownloadLink>
+                        </DownloadPDFButton>
                       </td>
                     </tr>
                   );

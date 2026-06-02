@@ -5,11 +5,17 @@ import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/render
 const LOGO_URL  = 'https://pedidos.bonettoconamor.com/logo.png';
 const PROXY_URL = 'https://pedidos.bonettoconamor.com/api/proxy-image?url=';
 
-/** Transforms a WordPress image URL into a proxied URL served by our backend */
-const proxied = (url) =>
-  url && typeof url === 'string' && url.startsWith('http')
-    ? `${PROXY_URL}${encodeURIComponent(url)}`
-    : null;
+/** Transforms an image URL into a usable src for @react-pdf:
+ * - data: URLs (base64) are passed directly
+ * - http(s): URLs are routed through the backend proxy (CORS + WebP fix)
+ * - anything else → null (renders the — placeholder)
+ */
+const proxied = (url) => {
+  if (!url || typeof url !== 'string') return null;
+  if (url.startsWith('data:')) return url;          // already prefetched as base64
+  if (url.startsWith('http')) return `${PROXY_URL}${encodeURIComponent(url)}`;
+  return null;
+};
 
 const C = {
   indigo:  '#4f46e5',

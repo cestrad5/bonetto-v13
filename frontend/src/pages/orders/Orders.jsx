@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { RefreshCw, ChevronDown, ChevronUp, FileText } from 'lucide-react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import OrderPDF from '../../components/pdf/OrderPDF';
+import DownloadPDFButton from '../../components/pdf/DownloadPDFButton';
 import { toast } from 'react-toastify';
 
 const STATUS_CONFIG = {
@@ -59,22 +58,14 @@ const OrderRow = ({ order }) => {
           </span>
           <Badge status={order.Estado} />
 
-          <PDFDownloadLink
-            document={<OrderPDF order={{
-              ...order,
-              items: order.items.map(i => ({
-                ...i,
-                name:      i.Producto_Nombre,
-                qty:       i.Qty,
-                subtotal:  i.Subtotal,
-                Imagen_URL: i.Imagen_URL || ''
-              }))
-            }} />}
+          <DownloadPDFButton
+            order={order}
+            items={order.items}
             fileName={`Pedido_${order.Pedido_ID}.pdf`}
-            style={{ textDecoration: 'none' }}
           >
-            {({ loading }) => (
+            {({ loading, handleDownload }) => (
               <button
+                onClick={handleDownload}
                 disabled={loading}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '5px',
@@ -89,7 +80,7 @@ const OrderRow = ({ order }) => {
                 <FileText size={13} /> {loading ? '…' : 'PDF'}
               </button>
             )}
-          </PDFDownloadLink>
+          </DownloadPDFButton>
 
           <button
             onClick={() => setOpen(!open)}

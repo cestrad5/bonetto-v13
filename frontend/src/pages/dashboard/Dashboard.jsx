@@ -5,8 +5,7 @@ import { selectUser } from '../../redux/features/authSlice';
 import { selectCartItems } from '../../redux/features/cartSlice';
 import api from '../../services/api';
 import { ShoppingBag, ShoppingCart, ClipboardList, TrendingUp, Clock, FileText } from 'lucide-react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import OrderPDF from '../../components/pdf/OrderPDF';
+import DownloadPDFButton from '../../components/pdf/DownloadPDFButton';
 import { toast } from 'react-toastify';
 
 /* ── Stat Card ──────────────────────────────────────────────────────── */
@@ -198,26 +197,30 @@ const Dashboard = () => {
                       {order.Estado}
                     </span>
 
-                    <PDFDownloadLink
-                      document={<OrderPDF order={{ ...order, items: orders.filter(x => x.Pedido_ID === order.Pedido_ID) }} />}
+                    <DownloadPDFButton
+                      order={order}
+                      items={orders.filter(x => x.Pedido_ID === order.Pedido_ID)}
                       fileName={`Pedido_${order.Pedido_ID}.pdf`}
-                      style={{ textDecoration: 'none' }}
                     >
-                      {({ loading: pdfLoading }) => (
-                        <button title="Descargar PDF" style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          width: '32px', height: '32px',
-                          background: 'var(--accent-soft)', border: '1.5px solid var(--accent-soft)',
-                          borderRadius: 'var(--radius-sm)', color: 'var(--accent)',
-                          cursor: 'pointer', transition: 'background 0.15s',
-                        }}
+                      {({ loading: pdfLoading, handleDownload }) => (
+                        <button
+                          onClick={handleDownload}
+                          disabled={pdfLoading}
+                          title="Descargar PDF"
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            width: '32px', height: '32px',
+                            background: 'var(--accent-soft)', border: '1.5px solid var(--accent-soft)',
+                            borderRadius: 'var(--radius-sm)', color: 'var(--accent)',
+                            cursor: 'pointer', transition: 'background 0.15s',
+                          }}
                           onMouseEnter={e => e.currentTarget.style.background = 'rgba(61,43,31,0.15)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'var(--accent-soft)'}
                         >
                           <FileText size={14} />
                         </button>
                       )}
-                    </PDFDownloadLink>
+                    </DownloadPDFButton>
                   </div>
                 </div>
               );
