@@ -6,7 +6,8 @@ import { toast } from 'react-toastify';
 
 const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
   const dispatch = useDispatch();
-  const [qty, setQty] = useState(1);
+  const [qty, setQty]           = useState(1);
+  const [inputVal, setInputVal] = useState('1');
   const [imgErr, setImgErr] = useState(false);
 
   const priceIVA     = parseFloat(String(product.Precio_IVA    || '0').replace(/[^0-9.-]+/g, '')) || 0;
@@ -34,6 +35,7 @@ const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
     }));
     toast.success(`${qty}× ${product.Nombre} añadido`, { icon: '🛒' });
     setQty(1);
+    setInputVal('1');
   };
 
   return (
@@ -179,7 +181,7 @@ const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
             border: '1.5px solid var(--border)', overflow: 'hidden',
           }}>
             <button
-              onClick={() => setQty(q => Math.max(1, q - 1))}
+              onClick={() => { const n = Math.max(1, qty - 1); setQty(n); setInputVal(String(n)); }}
               style={{
                 width: '34px', height: '34px', background: 'transparent', border: 'none',
                 color: 'var(--text-muted)', cursor: 'pointer', display: 'flex',
@@ -193,8 +195,22 @@ const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
             <input
               type="number"
               min="1"
-              value={qty}
-              onChange={e => setQty(Math.max(1, parseInt(e.target.value) || 1))}
+              value={inputVal}
+              onChange={e => {
+                const raw = e.target.value;
+                setInputVal(raw);
+                const parsed = parseInt(raw, 10);
+                if (!isNaN(parsed) && parsed >= 1) setQty(parsed);
+              }}
+              onBlur={() => {
+                const parsed = parseInt(inputVal, 10);
+                if (isNaN(parsed) || parsed < 1) {
+                  setInputVal('1');
+                  setQty(1);
+                } else {
+                  setInputVal(String(parsed));
+                }
+              }}
               style={{
                 width: '44px', height: '34px',
                 background: 'transparent', border: 'none',
@@ -204,7 +220,7 @@ const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
               }}
             />
             <button
-              onClick={() => setQty(q => q + 1)}
+              onClick={() => { const n = qty + 1; setQty(n); setInputVal(String(n)); }}
               style={{
                 width: '34px', height: '34px', background: 'transparent', border: 'none',
                 color: 'var(--text-muted)', cursor: 'pointer', display: 'flex',

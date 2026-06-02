@@ -1,5 +1,6 @@
 import https from 'https';
 import http from 'http';
+import sharp from 'sharp';
 
 /**
  * GET /api/proxy-image?url=<encoded-url>
@@ -36,7 +37,9 @@ export const proxyImage = (req, res) => {
   // ── Fetch & stream ────────────────────────────────────────────────────────
   const client = parsedUrl.protocol === 'https:' ? https : http;
 
-  const request = client.get(parsedUrl.toString(), (imageRes) => {
+  const request = client.get(parsedUrl.toString(), {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Proxy-Image-Service)' }
+  }, (imageRes) => {
     if (imageRes.statusCode !== 200) {
       return res.status(imageRes.statusCode).json({ error: 'Image not found' });
     }
@@ -46,10 +49,15 @@ export const proxyImage = (req, res) => {
     // CORS headers so the browser (react-pdf) can use the response
     res.setHeader('Access-Control-Allow-Origin', 'https://pedidos.bonettoconamor.com');
     res.setHeader('Access-Control-Allow-Methods', 'GET');
-    res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=86400'); // cache 24h
 
-    imageRes.pipe(res);
+    if (contentType === 'image/webp') {
+      res.setHeader('Content-Type', 'image/jpeg');
+      imageRes.pipe(sharp().jpeg()).pipe(res);
+    } else {
+      res.setHeader('Content-Type', contentType);
+      imageRes.pipe(res);
+    }
   });
 
   request.on('error', (err) => {
@@ -59,7 +67,7 @@ export const proxyImage = (req, res) => {
     }
   });
 
-  request.setTimeout(8000, () => {
+  request.setTimeout(15000, () => {
     request.destroy();
     if (!res.headersSent) {
       res.status(504).json({ error: 'Image fetch timeout' });
