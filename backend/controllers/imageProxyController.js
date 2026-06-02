@@ -4,11 +4,66 @@ import sharp from 'sharp';
 
 /**
  * GET /api/proxy-image?url=<encoded-url>
- * Fetches an image from bonettoconamor.com server-side (no CORS restriction)
- * and streams it back to the browser with proper CORS headers.
- * This allows react-pdf to embed remote images without CORS errors.
+ * Fetches an image from bonettoconamor.com server-side, follows redirects,
+ * converts WebP→JPEG, and streams the result back with CORS headers.
+ * This allows @react-pdf/renderer to embed remote images without CORS errors.
  */
-export const proxyImage = (req, res) => {
+
+const MAX_REDIRECTS = 5;
+
+/**
+ * Recursively fetches a URL, following up to MAX_REDIRECTS redirects.
+ * Resolves with the final IncomingMessage response.
+ */
+function fetchFollowingRedirects(urlString, redirectsLeft = MAX_REDIRECTS) {
+  return new Promise((resolve, reject) => {
+    if (redirectsLeft < 0) {
+      return reject(new Error('Too many redirects'));
+    }
+
+    let parsed;
+    try {
+      parsed = new URL(urlString);
+    } catch (e) {
+      return reject(new Error('Invalid redirect URL'));
+    }
+
+    const client = parsed.protocol === 'https:' ? https : http;
+
+    const req = client.get(
+      {
+        hostname: parsed.hostname,
+        path:     parsed.pathname + parsed.search,
+        protocol: parsed.protocol,
+        headers:  { 'User-Agent': 'Mozilla/5.0 BonettoPDFProxy/1.0' },
+      },
+      (res) => {
+        const { statusCode, headers } = res;
+
+        // Follow 3xx redirects
+        if ([301, 302, 303, 307, 308].includes(statusCode) && headers.location) {
+          // Drain the redirect response body so the socket is freed
+          res.resume();
+          // Resolve the redirect URL (may be relative)
+          const nextUrl = new URL(headers.location, urlString).toString();
+          console.log(`[ImageProxy] Redirect ${statusCode}: ${urlString} → ${nextUrl}`);
+          return resolve(fetchFollowingRedirects(nextUrl, redirectsLeft - 1));
+        }
+
+        resolve(res);
+      }
+    );
+
+    req.on('error', reject);
+
+    req.setTimeout(15000, () => {
+      req.destroy();
+      reject(new Error('Image fetch timeout'));
+    });
+  });
+}
+
+export const proxyImage = async (req, res) => {
   const { url } = req.query;
 
   // ── Validations ──────────────────────────────────────────────────────────
@@ -23,7 +78,7 @@ export const proxyImage = (req, res) => {
     return res.status(400).json({ error: 'Invalid URL' });
   }
 
-  // Security: only proxy images from bonettoconamor.com
+  // Security: only allow initial requests from bonettoconamor.com
   if (!parsedUrl.hostname.endsWith('bonettoconamor.com')) {
     return res.status(403).json({ error: 'Only bonettoconamor.com images allowed' });
   }
@@ -34,43 +89,35 @@ export const proxyImage = (req, res) => {
     return res.status(403).json({ error: 'Only image files allowed' });
   }
 
-  // ── Fetch & stream ────────────────────────────────────────────────────────
-  const client = parsedUrl.protocol === 'https:' ? https : http;
+  // ── Fetch (with redirect following) ──────────────────────────────────────
+  try {
+    const imageRes = await fetchFollowingRedirects(parsedUrl.toString());
 
-  const request = client.get(parsedUrl.toString(), {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Proxy-Image-Service)' }
-  }, (imageRes) => {
     if (imageRes.statusCode !== 200) {
-      return res.status(imageRes.statusCode).json({ error: 'Image not found' });
+      console.warn(`[ImageProxy] Non-200 status ${imageRes.statusCode} for: ${url}`);
+      return res.status(imageRes.statusCode).json({ error: 'Image not found at origin' });
     }
 
-    const contentType = imageRes.headers['content-type'] || 'image/png';
+    const contentType = imageRes.headers['content-type'] || 'image/jpeg';
 
-    // CORS headers so the browser (react-pdf) can use the response
-    res.setHeader('Access-Control-Allow-Origin', 'https://pedidos.bonettoconamor.com');
+    // CORS headers — use * so react-pdf Web Workers can access the response
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET');
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // cache 24h
+    res.setHeader('Cache-Control', 'public, max-age=86400');
 
-    if (contentType === 'image/webp') {
+    // ── WebP → JPEG conversion (react-pdf/pdfkit only supports JPEG & PNG) ──
+    if (contentType.includes('webp')) {
+      console.log(`[ImageProxy] Converting WebP→JPEG for: ${url}`);
       res.setHeader('Content-Type', 'image/jpeg');
-      imageRes.pipe(sharp().jpeg()).pipe(res);
+      imageRes.pipe(sharp().jpeg({ quality: 85 })).pipe(res);
     } else {
       res.setHeader('Content-Type', contentType);
       imageRes.pipe(res);
     }
-  });
-
-  request.on('error', (err) => {
-    console.error('[ImageProxy] Fetch error:', err.message);
+  } catch (err) {
+    console.error('[ImageProxy] Error:', err.message, '| URL:', url);
     if (!res.headersSent) {
-      res.status(502).json({ error: 'Failed to fetch image from origin' });
+      res.status(502).json({ error: err.message || 'Failed to fetch image' });
     }
-  });
-
-  request.setTimeout(15000, () => {
-    request.destroy();
-    if (!res.headersSent) {
-      res.status(504).json({ error: 'Image fetch timeout' });
-    }
-  });
+  }
 };
