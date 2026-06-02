@@ -167,18 +167,14 @@ const Dashboard = () => {
             {recentOrders.map((order, i) => {
               const cfg = statusConfig[order.Estado] || statusConfig['Despachado'];
               return (
-                <div key={order.Pedido_ID || i} style={{
-                  display: 'flex', alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '13px 20px',
-                  borderBottom: i < recentOrders.length - 1 ? '1px solid var(--border)' : 'none',
-                  gap: '12px', flexWrap: 'wrap',
-                  transition: 'background 0.12s',
-                }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-subtle)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                <div
+                  key={order.Pedido_ID || i}
+                  className="recent-order-row"
+                  style={{
+                    borderBottom: i < recentOrders.length - 1 ? '1px solid var(--border)' : 'none',
+                  }}
                 >
-                  <div style={{ minWidth: 0 }}>
+                  <div className="recent-order-row-info">
                     <p style={{ margin: 0, fontWeight: '600', fontSize: '0.88rem', color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {order.Cliente_Nombre}
                     </p>
@@ -187,7 +183,7 @@ const Dashboard = () => {
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                  <div className="recent-order-row-actions">
                     <span style={{
                       padding: '4px 11px', borderRadius: '99px',
                       fontSize: '0.72rem', fontWeight: '600',

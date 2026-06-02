@@ -179,25 +179,25 @@ const Admin = () => {
 
                   return (
                     <tr key={order.Pedido_ID || i}>
-                      <td>
+                      <td data-label="Pedido">
                         <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                           {order.Pedido_ID}
                         </span>
                       </td>
-                      <td style={{ fontWeight: '600' }}>{order.Cliente_Nombre || '—'}</td>
-                      <td style={{ color: 'var(--text-muted)', fontSize: '0.84rem' }}>{order.Usuario_Email || '—'}</td>
-                      <td style={{ color: 'var(--text-muted)', fontSize: '0.84rem' }}>
+                      <td data-label="Cliente" style={{ fontWeight: '600' }}>{order.Cliente_Nombre || '—'}</td>
+                      <td data-label="Asesor" style={{ color: 'var(--text-muted)', fontSize: '0.84rem' }}>{order.Usuario_Email || '—'}</td>
+                      <td data-label="Fecha" style={{ color: 'var(--text-muted)', fontSize: '0.84rem' }}>
                         {order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO') : '—'}
                       </td>
-                      <td style={{ fontWeight: '700', color: 'var(--green)' }}>
+                      <td data-label="Total" style={{ fontWeight: '700', color: 'var(--green)' }}>
                         {total > 0 ? `$${total.toLocaleString('es-CO')}` : '—'}
                       </td>
-                      <td>
+                      <td data-label="Estado">
                         <span style={{ padding: '4px 11px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: '600', background: cfg.bg, color: cfg.color, whiteSpace: 'nowrap' }}>
                           {order.Estado}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'center' }}>
+                      <td data-label="PDF" style={{ textAlign: 'center' }}>
                         <DownloadPDFButton
                           order={order}
                           items={itemsOfOrder}

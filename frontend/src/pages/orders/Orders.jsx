@@ -29,65 +29,62 @@ const OrderRow = ({ order }) => {
   const total = order.items.reduce((s, i) => s + (parseFloat(i.Subtotal) || 0), 0);
 
   return (
-    <div style={{
-      background: '#ffffff',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius-lg)',
-      overflow: 'hidden',
-      marginBottom: '10px',
-      boxShadow: 'var(--shadow-xs)',
-      transition: 'box-shadow 0.2s',
-    }}>
+    <div className="order-card">
       {/* Header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 18px', flexWrap: 'wrap', gap: '10px',
-      }}>
-        <div style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} onClick={() => setOpen(!open)}>
-          <p style={{ margin: 0, fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <div className="order-card-header">
+        <div className="order-card-info" onClick={() => setOpen(!open)}>
+          <p className="order-card-client">
             {order.Cliente_Nombre}
           </p>
-          <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-            {order.Pedido_ID} · {order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO') : 'Sin fecha'} · {order.items.length} ítem{order.items.length !== 1 ? 's' : ''}
+          <p className="order-card-meta">
+            <span>{order.Pedido_ID}</span>
+            <span className="dot-separator">·</span>
+            <span>{order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO') : 'Sin fecha'}</span>
+            <span className="dot-separator">·</span>
+            <span>{order.items.length} {order.items.length === 1 ? 'ítem' : 'ítems'}</span>
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          <span style={{ fontWeight: '800', color: 'var(--green)', fontSize: '0.95rem', letterSpacing: '-0.02em' }}>
-            ${total.toLocaleString('es-CO')}
-          </span>
-          <Badge status={order.Estado} />
+        <div className="order-card-status-price">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className="order-card-total">
+              ${total.toLocaleString('es-CO')}
+            </span>
+            <Badge status={order.Estado} />
+          </div>
 
-          <DownloadPDFButton
-            order={order}
-            items={order.items}
-            fileName={`Pedido_${order.Pedido_ID}.pdf`}
-          >
-            {({ loading, handleDownload }) => (
-              <button
-                onClick={handleDownload}
-                disabled={loading}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '5px',
-                  padding: '5px 10px', fontSize: '0.75rem',
-                  background: 'var(--accent-soft)', border: '1.5px solid rgba(99,102,241,0.2)',
-                  color: 'var(--accent)', borderRadius: 'var(--radius-sm)',
-                  cursor: 'pointer', fontWeight: '600', transition: 'background 0.15s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(99,102,241,0.15)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'var(--accent-soft)'}
-              >
-                <FileText size={13} /> {loading ? '…' : 'PDF'}
-              </button>
-            )}
-          </DownloadPDFButton>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <DownloadPDFButton
+              order={order}
+              items={order.items}
+              fileName={`Pedido_${order.Pedido_ID}.pdf`}
+            >
+              {({ loading, handleDownload }) => (
+                <button
+                  onClick={handleDownload}
+                  disabled={loading}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '5px',
+                    padding: '5px 10px', fontSize: '0.75rem',
+                    background: 'var(--accent-soft)', border: '1.5px solid rgba(99,102,241,0.2)',
+                    color: 'var(--accent)', borderRadius: 'var(--radius-sm)',
+                    cursor: 'pointer', fontWeight: '600', transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(99,102,241,0.15)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'var(--accent-soft)'}
+                >
+                  <FileText size={13} /> {loading ? '…' : 'PDF'}
+                </button>
+              )}
+            </DownloadPDFButton>
 
-          <button
-            onClick={() => setOpen(!open)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', padding: '4px' }}
-          >
-            {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
+            <button
+              onClick={() => setOpen(!open)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', padding: '4px' }}
+            >
+              {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+          </div>
         </div>
       </div>
 
