@@ -171,6 +171,18 @@ const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
           </p>
         )}
 
+        {/* Inventory */}
+        {product.Inventario_Actual !== undefined && product.Inventario_Actual !== '' && (() => {
+          const stock = parseInt(product.Inventario_Actual, 10);
+          const color = isNaN(stock) || stock === 0 ? 'var(--red)' : stock <= 10 ? 'var(--amber)' : 'var(--green)';
+          const label = isNaN(stock) ? product.Inventario_Actual : stock;
+          return (
+            <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: '600', color }}>
+              📦 Inventario: {label}
+            </p>
+          );
+        })()}
+
         {/* ── Quantity + Add ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
 
