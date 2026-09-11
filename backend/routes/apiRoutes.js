@@ -8,7 +8,7 @@ import { proxyImage } from '../controllers/imageProxyController.js';
 const router = express.Router();
 
 // Products
-router.get('/products', getProducts);
+router.get('/products', protect, getProducts);
 router.get('/products/special-prices', protect, getSpecialPrices);
 router.post('/products/refresh', protect, adminOnly, refreshProducts);
 
@@ -22,8 +22,12 @@ router.get('/orders', protect, getOrders);
 // Image proxy — public, no auth (fetches WP images server-side to bypass CORS)
 router.get('/proxy-image', proxyImage);
 
-// Temporary diagnostic — remove after confirming sheet headers
-router.get('/debug/sheet-headers', protect, debugSheet);
+// Diagnóstico temporal: filtra estructura completa de la hoja de Pedidos.
+// Quedaba accesible en producción para cualquier usuario autenticado (no
+// solo Admin). Ahora requiere rol Admin y solo existe fuera de producción.
+if (process.env.NODE_ENV !== 'production') {
+  router.get('/debug/sheet-headers', protect, adminOnly, debugSheet);
+}
 
 // User Profile
 router.get('/me', protect, (req, res) => {

@@ -10,6 +10,27 @@ import sharp from 'sharp';
  */
 
 const MAX_REDIRECTS = 5;
+const VALID_EXTENSIONS = /\.(png|jpg|jpeg|gif|webp|svg|ico)(\?.*)?$/i;
+
+/**
+ * Security: every URL we actually connect to (initial request AND each
+ * redirect hop) must point at bonettoconamor.com, use http/https, and
+ * target an image path. Without re-checking on redirects, an attacker
+ * controlling that origin (or a compromised/misconfigured page there)
+ * could 302 the proxy into internal services (SSRF), e.g.
+ * http://169.254.169.254/ or a container on the Docker network.
+ */
+function assertSafeUrl(parsed) {
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    throw new Error('Only http/https URLs allowed');
+  }
+  if (!parsed.hostname.endsWith('bonettoconamor.com')) {
+    throw new Error('Only bonettoconamor.com images allowed');
+  }
+  if (!VALID_EXTENSIONS.test(parsed.pathname)) {
+    throw new Error('Only image files allowed');
+  }
+}
 
 /**
  * Recursively fetches a URL, following up to MAX_REDIRECTS redirects.
@@ -24,6 +45,7 @@ function fetchFollowingRedirects(urlString, redirectsLeft = MAX_REDIRECTS) {
     let parsed;
     try {
       parsed = new URL(urlString);
+      assertSafeUrl(parsed);
     } catch (e) {
       return reject(new Error('Invalid redirect URL'));
     }
@@ -74,19 +96,9 @@ export const proxyImage = async (req, res) => {
   let parsedUrl;
   try {
     parsedUrl = new URL(decodeURIComponent(url));
-  } catch {
-    return res.status(400).json({ error: 'Invalid URL' });
-  }
-
-  // Security: only allow initial requests from bonettoconamor.com
-  if (!parsedUrl.hostname.endsWith('bonettoconamor.com')) {
-    return res.status(403).json({ error: 'Only bonettoconamor.com images allowed' });
-  }
-
-  // Only allow image paths
-  const validExtensions = /\.(png|jpg|jpeg|gif|webp|svg|ico)(\?.*)?$/i;
-  if (!validExtensions.test(parsedUrl.pathname)) {
-    return res.status(403).json({ error: 'Only image files allowed' });
+    assertSafeUrl(parsedUrl);
+  } catch (err) {
+    return res.status(403).json({ error: err.message || 'Invalid URL' });
   }
 
   // ── Fetch (with redirect following) ──────────────────────────────────────

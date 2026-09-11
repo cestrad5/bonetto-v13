@@ -12,8 +12,6 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.3",
     "axios": "^1.6.8",
-    "dexie": "^4.0.4",
-    "dexie-react-hooks": "^1.1.7",
     "firebase": "^10.11.0",
     "framer-motion": "^11.1.7",
     "lucide-react": "^0.378.0",

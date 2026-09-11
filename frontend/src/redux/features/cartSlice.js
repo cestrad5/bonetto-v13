@@ -36,8 +36,20 @@ const cartSlice = createSlice({
     },
     SET_CLIENT: (state, action) => {
       state.selectedClient = action.payload;
-      // When client changes, we might need to recalculate prices if they have different discounts
-      // Logic for this will be in the Catalog/ProductCard components
+    },
+    // Recalcula priceFinal (y discountPct) de los items ya en el carrito.
+    // Necesario porque SET_CLIENT por sí solo dejaba los precios congelados
+    // con el descuento/acuerdo especial del cliente anterior — el pedido se
+    // enviaba con precios equivocados si el usuario cambiaba de cliente
+    // después de haber agregado productos.
+    // payload: { [SKU]: { priceFinal, discountPct } }
+    RECALCULATE_PRICES: (state, action) => {
+      const priceMap = action.payload || {};
+      state.cartItems = state.cartItems.map(item => {
+        const update = priceMap[item.SKU];
+        return update ? { ...item, priceFinal: update.priceFinal, discountPct: update.discountPct } : item;
+      });
+      state.totalAmount = state.cartItems.reduce((total, item) => total + (item.priceFinal * item.qty), 0);
     },
     CLEAR_CART: (state) => {
       state.cartItems = [];
@@ -47,7 +59,7 @@ const cartSlice = createSlice({
   },
 });
 
-export const { ADD_TO_CART, REMOVE_FROM_CART, UPDATE_QTY, SET_CLIENT, CLEAR_CART } = cartSlice.actions;
+export const { ADD_TO_CART, REMOVE_FROM_CART, UPDATE_QTY, SET_CLIENT, RECALCULATE_PRICES, CLEAR_CART } = cartSlice.actions;
 
 export const selectCartItems = (state) => state.cart.cartItems;
 export const selectSelectedClient = (state) => state.cart.selectedClient;

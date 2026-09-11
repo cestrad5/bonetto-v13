@@ -28,7 +28,10 @@
   --text-main:   #1d1d1f;
   --text-sub:    #3c3c43;
   --text-muted:  #6e6e73;
-  --text-dim:    #aeaeb2;
+  /* Antes #aeaeb2 (~2.3:1 sobre blanco, falla WCAG AA para texto normal).
+     Se usa en SKU, códigos de barra y separadores a tamaños chicos
+     (0.65–0.72rem), así que necesita al menos 4.5:1. */
+  --text-dim:    #767680;
 
   /* ── Spacing & geometry ── */
   --sidebar-w:   256px;
@@ -69,6 +72,33 @@ body {
 img { max-width: 100%; display: block; }
 input, select, button, textarea { font-family: inherit; }
 a { text-decoration: none; color: inherit; }
+
+/* Oculta visualmente pero deja disponible para lectores de pantalla —
+   usado en <label> de inputs que ya muestran el texto vía placeholder. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Foco visible por teclado ──
+   Antes solo .input-field tenía :focus definido; navegar con Tab por
+   botones, chips y links no mostraba ninguna posición. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
 /* ─── SCROLLBAR ─────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }

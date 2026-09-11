@@ -21,10 +21,12 @@ const Layout = ({ children }) => {
         onClick={close}
       />
 
-      {/* Sidebar */}
-      <Sidebar onClose={close} />
-      {/* Apply "open" class only on mobile */}
-      <style>{`@media (max-width: 1023px) { .sidebar { transform: ${sidebarOpen ? 'translateX(0)' : 'translateX(-100%)'}; } }`}</style>
+      {/* Sidebar. La clase "open" ya está definida en index.css
+          (.sidebar.open { transform: translateX(0) }) — antes esto se
+          resolvía inyectando un <style> nuevo en cada toggle, forzando al
+          navegador a reparsear una hoja de estilos completa por cada abrir/
+          cerrar del menú en mobile. */}
+      <Sidebar onClose={close} open={sidebarOpen} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {/* Mobile topbar */}

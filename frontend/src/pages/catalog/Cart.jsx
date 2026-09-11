@@ -12,6 +12,7 @@ import {
 import { Trash2, Minus, Plus, Send, ChevronLeft } from 'lucide-react';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
+import { savePendingOrder, isNetworkError } from '../../services/offlineOrders';
 
 const Cart = () => {
   const user           = useSelector(state => state.auth.user);
@@ -22,38 +23,66 @@ const Cart = () => {
   const navigate       = useNavigate();
   const [note, setNote] = React.useState('');
   const [imgErrors, setImgErrors] = React.useState({});
+  const [submitting, setSubmitting] = React.useState(false);
 
   const handleQtyChange = (SKU, currentQty, delta) => {
     const newQty = currentQty + delta;
     if (newQty > 0) dispatch(UPDATE_QTY({ SKU, qty: newQty }));
   };
 
+  // Antes vaciaba sin preguntar: un toque perdía un pedido largo sin poder
+  // deshacerlo.
+  const handleClearCart = () => {
+    if (cartItems.length === 0) return;
+    if (window.confirm('¿Vaciar el carrito? Esta acción no se puede deshacer.')) {
+      dispatch(CLEAR_CART());
+    }
+  };
+
   const handleSubmitOrder = async () => {
+    if (submitting) return; // evita doble envío (doble clic / doble tap)
     if (!selectedClient) return toast.warn('Selecciona un cliente en el catálogo');
     if (cartItems.length === 0) return toast.warn('El carrito está vacío');
+
+    const items = cartItems.map(i => ({
+      ...i,
+      sku:       i.SKU,
+      name:      i.Nombre,
+      priceList: i.priceIVA,
+      subtotal:  i.priceFinal * i.qty,
+      imageUrl:  i.Imagen_URL || '',
+    }));
+
+    const payload = {
+      orderId:    `BN-${Date.now()}`,
+      date:       new Date().toISOString(),
+      userEmail:  user?.email,
+      clientId:   selectedClient.ID,
+      clientName: selectedClient.Nombre,
+      items,
+      // Total derivado de los MISMOS items que se envían, no de un selector separado,
+      // para que nunca pueda divergir de lo que efectivamente queda guardado.
+      totalOrder: items.reduce((s, i) => s + i.subtotal, 0),
+      note,
+    };
+
+    setSubmitting(true);
     try {
-      await api.post('/api/orders', {
-        orderId:    `BN-${Date.now()}`,
-        date:       new Date().toISOString(),
-        userEmail:  user?.email,
-        clientId:   selectedClient.ID,
-        clientName: selectedClient.Nombre,
-        items: cartItems.map(i => ({
-          ...i,
-          sku:       i.SKU,
-          name:      i.Nombre,
-          priceList: i.priceIVA,
-          subtotal:  i.priceFinal * i.qty,
-          imageUrl:  i.Imagen_URL || '',
-        })),
-        totalOrder: totalAmount,
-        note,
-      });
+      await api.post('/api/orders', payload);
       toast.success('¡Pedido enviado con éxito! 🎉');
       dispatch(CLEAR_CART());
       navigate('/orders');
-    } catch {
-      toast.error('Error al enviar el pedido');
+    } catch (error) {
+      if (isNetworkError(error)) {
+        savePendingOrder(payload);
+        toast.info('Sin conexión: pedido guardado en el dispositivo. Se enviará solo cuando vuelva internet.');
+        dispatch(CLEAR_CART());
+        navigate('/orders');
+      } else {
+        toast.error('Error al enviar el pedido');
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -64,9 +93,10 @@ const Cart = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
         <button
           onClick={() => navigate('/catalog')}
+          aria-label="Volver al catálogo"
           style={{
             background: 'var(--bg-card)', border: '1.5px solid var(--border)',
-            borderRadius: 'var(--radius-sm)', padding: '8px', color: 'var(--text-muted)',
+            borderRadius: 'var(--radius-sm)', padding: '10px', color: 'var(--text-muted)',
             cursor: 'pointer', display: 'flex', alignItems: 'center', boxShadow: 'var(--shadow-xs)',
           }}
         >
@@ -86,7 +116,7 @@ const Cart = () => {
               background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
               padding: '60px 20px', textAlign: 'center', boxShadow: 'var(--shadow-xs)',
             }}>
-              <div style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.5 }}>🛒</div>
+              <div aria-hidden="true" style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.5 }}>🛒</div>
               <h3 style={{ margin: '0 0 8px', color: 'var(--text-main)' }}>Tu carrito está vacío</h3>
               <p style={{ color: 'var(--text-muted)', marginBottom: '24px', fontSize: '0.88rem' }}>
                 Explora el catálogo para agregar productos.
@@ -115,7 +145,7 @@ const Cart = () => {
                     style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }}
                   />
                 ) : (
-                  <span style={{ fontSize: '1.5rem' }}>📦</span>
+                  <span aria-hidden="true" style={{ fontSize: '1.5rem' }}>📦</span>
                 )}
               </div>
 
@@ -137,19 +167,28 @@ const Cart = () => {
                   background: 'var(--bg-subtle)', borderRadius: 'var(--radius-sm)',
                   border: '1.5px solid var(--border)', overflow: 'hidden',
                 }}>
-                  <button onClick={() => handleQtyChange(item.SKU, item.qty, -1)} style={{ padding: '5px 8px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                  <button
+                    onClick={() => handleQtyChange(item.SKU, item.qty, -1)}
+                    aria-label={`Restar unidad de ${item.Nombre}, cantidad actual ${item.qty}`}
+                    style={{ width: '36px', height: '36px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
                     <Minus size={13} />
                   </button>
                   <span style={{ width: '28px', textAlign: 'center', fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-main)' }}>
                     {item.qty}
                   </span>
-                  <button onClick={() => handleQtyChange(item.SKU, item.qty, 1)} style={{ padding: '5px 8px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                  <button
+                    onClick={() => handleQtyChange(item.SKU, item.qty, 1)}
+                    aria-label={`Sumar unidad de ${item.Nombre}, cantidad actual ${item.qty}`}
+                    style={{ width: '36px', height: '36px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
                     <Plus size={13} />
                   </button>
                 </div>
                 <button
                   onClick={() => dispatch(REMOVE_FROM_CART({ SKU: item.SKU }))}
-                  style={{ color: 'var(--red)', background: 'transparent', border: 'none', padding: '3px', cursor: 'pointer', opacity: 0.7, transition: 'opacity 0.15s' }}
+                  aria-label={`Quitar ${item.Nombre} del carrito`}
+                  style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)', background: 'transparent', border: 'none', cursor: 'pointer', opacity: 0.7, transition: 'opacity 0.15s' }}
                   onMouseEnter={e => e.currentTarget.style.opacity = '1'}
                   onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
                 >
@@ -187,10 +226,11 @@ const Cart = () => {
 
                 {/* Notes */}
                 <div style={{ paddingTop: '14px', borderTop: '1px solid var(--border)' }}>
-                  <p style={{ margin: '0 0 8px', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-muted)' }}>
+                  <label htmlFor="cart-note" style={{ display: 'block', margin: '0 0 8px', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-muted)' }}>
                     Notas del pedido <span style={{ fontWeight: '400' }}>(opcional)</span>
-                  </p>
+                  </label>
                   <textarea
+                    id="cart-note"
                     className="input-field"
                     placeholder="Ej: Entrega en portería, empaque regalo..."
                     value={note}
@@ -213,14 +253,14 @@ const Cart = () => {
                 <button
                   className="btn-primary"
                   onClick={handleSubmitOrder}
-                  disabled={cartItems.length === 0 || !selectedClient}
+                  disabled={cartItems.length === 0 || !selectedClient || submitting}
                   style={{ padding: '14px', marginTop: '4px' }}
                 >
-                  <Send size={17} /> Enviar Pedido
+                  <Send size={17} /> {submitting ? 'Enviando...' : 'Enviar Pedido'}
                 </button>
 
                 <button
-                  onClick={() => dispatch(CLEAR_CART())}
+                  onClick={handleClearCart}
                   style={{
                     background: 'transparent', border: 'none',
                     color: 'var(--text-dim)', fontSize: '0.82rem',

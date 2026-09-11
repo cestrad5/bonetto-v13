@@ -1,14 +1,37 @@
 import React, { useState } from 'react';
-import { pdf } from '@react-pdf/renderer';
 import api from '../../services/api';
-import OrderPDF from './OrderPDF';
 import { toast } from 'react-toastify';
+
+// Antes Promise.all lanzaba TODAS las imágenes del pedido a la vez (un
+// pedido de 30 ítems = 30 requests simultáneos al proxy, cada uno con
+// timeout de 15s) — riesgo de saturar el proxy/backend y de trabar el hilo
+// principal convirtiendo muchos blobs a base64 al mismo tiempo. Se procesan
+// de a IMAGE_FETCH_CONCURRENCY como máximo.
+const IMAGE_FETCH_CONCURRENCY = 4;
+
+async function mapWithConcurrency(items, limit, mapper) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+  const workers = new Array(Math.min(limit, items.length)).fill(null).map(async () => {
+    while (nextIndex < items.length) {
+      const current = nextIndex++;
+      results[current] = await mapper(items[current], current);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
 
 /**
  * Reusable button to download a PDF of an order.
  * It prefetches all product images as base64 in the browser,
  * ensuring they are loaded properly and bypassing any CORS or Silent Fetch
  * issues in @react-pdf/renderer.
+ *
+ * @react-pdf/renderer (y su árbol de dependencias) pesa la mayor parte del
+ * bundle inicial pero solo se usa cuando alguien pide un PDF, algo poco
+ * frecuente. Se importa dinámicamente aquí para que quede en un chunk aparte
+ * que el navegador solo descarga al primer click en "Descargar PDF".
  */
 const DownloadPDFButton = ({ order, items, style, title, children, fileName }) => {
   const [loading, setLoading] = useState(false);
@@ -20,9 +43,14 @@ const DownloadPDFButton = ({ order, items, style, title, children, fileName }) =
 
     setLoading(true);
     try {
+      // 0. Cargar @react-pdf/renderer y el template del PDF bajo demanda
+      const [{ pdf }, { default: OrderPDF }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('./OrderPDF'),
+      ]);
+
       // 1. Prefetch product images as base64
-      const prefetchedItems = await Promise.all(
-        (items || []).map(async (item) => {
+      const prefetchedItems = await mapWithConcurrency(items || [], IMAGE_FETCH_CONCURRENCY, async (item) => {
           const rawImg = item.Imagen_URL || item.imageUrl || '';
           if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http')) {
             return {
@@ -59,8 +87,7 @@ const DownloadPDFButton = ({ order, items, style, title, children, fileName }) =
               Imagen_URL: ''
             };
           }
-        })
-      );
+      });
 
       // 2. Render PDF document
       const doc = (

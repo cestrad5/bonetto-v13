@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -14,6 +14,27 @@ const Login = () => {
   const navigate = useNavigate();
   const isLoading = useSelector(selectIsLoading);
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('expired') === '1') {
+      toast.info('Tu sesión expiró. Volvé a iniciar sesión.');
+    }
+  }, []);
+
+  // Antes cualquier error (red caída, popup cerrado, usuario inactivo en
+  // nuestro backend) mostraba el mismo "Credenciales incorrectas" — el
+  // usuario reintentaba la contraseña sin parar cuando el problema real era
+  // otro (sin internet, cuenta deshabilitada, demasiados intentos).
+  const describeAuthError = (error) => {
+    const code = error?.code || '';
+    if (code === 'auth/network-request-failed') return 'Sin conexión a internet. Revisa tu red e intenta de nuevo.';
+    if (code === 'auth/too-many-requests') return 'Demasiados intentos fallidos. Espera unos minutos e intenta de nuevo.';
+    if (code === 'auth/user-disabled') return 'Tu cuenta está deshabilitada. Contacta al administrador.';
+    if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return null; // el usuario canceló, no es un error real
+    if (code === 'auth/wrong-password' || code === 'auth/user-not-found' || code === 'auth/invalid-credential') return 'Credenciales incorrectas.';
+    if (error?.response?.status === 401) return 'Tu usuario no está autorizado o está inactivo.';
+    return 'No se pudo iniciar sesión. Intenta de nuevo.';
+  };
+
   const handleGoogleLogin = async () => {
     dispatch(SET_LOADING(true));
     try {
@@ -25,7 +46,8 @@ const Login = () => {
       const target = userData.role?.trim().toLowerCase() === 'cliente' ? '/catalog' : '/dashboard';
       navigate(target);
     } catch (error) {
-      toast.error('Error al iniciar sesión con Google');
+      const message = describeAuthError(error);
+      if (message) toast.error(message);
     } finally {
       dispatch(SET_LOADING(false));
     }
@@ -34,7 +56,7 @@ const Login = () => {
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) return toast.warn('Completa todos los campos');
-    
+
     dispatch(SET_LOADING(true));
     try {
       const userData = await loginWithEmail(email, password);
@@ -45,7 +67,7 @@ const Login = () => {
       const target = userData.role === 'Cliente' ? '/catalog' : '/dashboard';
       navigate(target);
     } catch (error) {
-      toast.error('Credenciales incorrectas');
+      toast.error(describeAuthError(error));
     } finally {
       dispatch(SET_LOADING(false));
     }
@@ -69,21 +91,26 @@ const Login = () => {
             />
           </div>
           <h2 style={{ marginTop: '0.5rem', fontWeight: '600', fontSize: '1rem', color: 'var(--text-main)' }}>Ventas v13 — Portal de Pedidos</h2>
-          <p style={{ marginTop: '0.25rem', fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>build: pine-wood-theme · v9</p>
         </div>
 
         <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <input 
-            type="email" 
-            placeholder="Email" 
-            value={email} 
+          <label htmlFor="login-email" className="sr-only">Email</label>
+          <input
+            id="login-email"
+            type="email"
+            placeholder="Email"
+            autoComplete="email"
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="input-field"
           />
-          <input 
-            type="password" 
-            placeholder="Contraseña" 
-            value={password} 
+          <label htmlFor="login-password" className="sr-only">Contraseña</label>
+          <input
+            id="login-password"
+            type="password"
+            placeholder="Contraseña"
+            autoComplete="current-password"
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="input-field"
           />

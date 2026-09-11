@@ -1,6 +1,20 @@
 import asyncHandler from 'express-async-handler';
 import { verifyToken } from '../firebaseAdmin.js';
 import { getSheetData, mapRowsToObjects } from '../sheetsService.js';
+import { getCache, setCache } from '../cacheService.js';
+
+const USERS_CACHE_KEY = 'sheet_usuarios';
+const USERS_CACHE_TTL = 60; // segundos: antes se leía la hoja Usuarios!A:Z completa EN CADA request autenticado
+
+const getUsers = async () => {
+  const cached = getCache(USERS_CACHE_KEY);
+  if (cached) return cached;
+
+  const rows = await getSheetData('Usuarios!A:Z');
+  const users = mapRowsToObjects(rows);
+  setCache(USERS_CACHE_KEY, users, USERS_CACHE_TTL);
+  return users;
+};
 
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -10,14 +24,26 @@ export const protect = asyncHandler(async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = await verifyToken(token);
 
-      // Fetch user role and status from Sheets
-      const rows = await getSheetData('Usuarios!A:Z');
-      const users = mapRowsToObjects(rows);
-      const user = users.find(u => u.Email === decoded.email);
+      // Fetch user role and status from Sheets (cacheado: ver getUsers)
+      // Comparación normalizada (trim + lowercase): un espacio de más o una
+      // mayúscula distinta al reguardar la fila en Sheets (edición manual,
+      // copiar/pegar, autocorrección) bastaba para que un usuario que
+      // funcionaba dejara de poder loguearse, con un 401 genérico que no
+      // decía por qué. El resto del código ya usa esta misma normalización
+      // para comparar roles (ver Catalog.jsx, orderController.js).
+      const normalize = (v) => String(v || '').trim().toLowerCase();
+      const users = await getUsers();
+      const user = users.find(u => normalize(u.Email) === normalize(decoded.email));
 
-      if (!user || user.Activo !== 'TRUE') {
+      if (!user) {
+        console.warn(`[Auth] Login rechazado: ${decoded.email} no está en la hoja Usuarios`);
         res.status(401);
-        throw new Error('User not authorized or inactive');
+        throw new Error('User not found in Usuarios sheet');
+      }
+      if (normalize(user.Activo) !== 'true') {
+        console.warn(`[Auth] Login rechazado: ${decoded.email} tiene Activo="${user.Activo}"`);
+        res.status(401);
+        throw new Error('User is not active');
       }
 
       req.user = {

@@ -4,7 +4,11 @@ const initialState = {
   isLoggedIn: false,
   user: null, // { name, email, role, uid }
   token: null,
-  isLoading: false,
+  // Arranca en true: hasta que onIdTokenChanged resuelva por primera vez no
+  // sabemos si hay sesión. Si arrancara en false, las rutas evaluaban
+  // isLoggedIn=false en el primer render y mandaban a /login aunque hubiera
+  // una sesión válida (flash de redirección + se perdía el deep-link).
+  isLoading: true,
 };
 
 const authSlice = createSlice({

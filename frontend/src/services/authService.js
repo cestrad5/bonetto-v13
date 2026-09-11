@@ -5,7 +5,7 @@ import {
   signInWithEmailAndPassword, 
   signOut 
 } from "./firebase";
-import { api, getProfile } from "./api";
+import { getProfile } from "./api";
 
 /**
  * Login with Google

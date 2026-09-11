@@ -1,5 +1,28 @@
 import asyncHandler from 'express-async-handler';
 import { appendSheetData, getSheetData, mapRowsToObjects } from '../sheetsService.js';
+import { getCache, setCache } from '../cacheService.js';
+
+const ORDER_IDS_CACHE_KEY = 'recent_order_ids';
+const ORDER_IDS_CACHE_TTL = 60; // segundos: suficiente para cubrir reintentos de la cola offline
+
+// Devuelve un Map ID_Pedido -> cantidad de filas ya escritas en la hoja (columna A),
+// cacheado brevemente para no pegarle a Sheets API en cada POST /api/orders.
+// Se usa conteo (no solo presencia) porque un pedido puede haber quedado a medio
+// escribir si el request se cortó entre ítems (fila 1 de N ya existe pero faltan N-1).
+const getRecentOrderIdCounts = async () => {
+  const cached = getCache(ORDER_IDS_CACHE_KEY);
+  if (cached) return cached;
+
+  const rows = await getSheetData('Pedidos!A:A');
+  const counts = new Map();
+  for (const r of (rows || []).slice(1)) {
+    const id = r[0];
+    if (!id) continue;
+    counts.set(id, (counts.get(id) || 0) + 1);
+  }
+  setCache(ORDER_IDS_CACHE_KEY, counts, ORDER_IDS_CACHE_TTL);
+  return counts;
+};
 
 /**
  * @desc    Debug — return raw sheet headers and sample data
@@ -51,6 +74,27 @@ export const createOrder = asyncHandler(async (req, res) => {
     throw new Error('No items in order');
   }
 
+  // Idempotencia: si el pedido ya fue registrado completo (reintento tras caída de red
+  // sin que el cliente haya recibido la respuesta original), no duplicar.
+  // Si quedó a medio escribir (menos filas que ítems), NO se trata como duplicado:
+  // eso silenciaba pedidos incompletos para siempre (bug real detectado en pedidos
+  // de Piñateria El Rio con totales por debajo del real).
+  if (orderId) {
+    const existingCounts = await getRecentOrderIdCounts();
+    const existingCount = existingCounts.get(orderId) || 0;
+    if (existingCount >= items.length) {
+      return res.status(200).json({ success: true, message: 'Order already exists (deduplicated)' });
+    }
+    if (existingCount > 0) {
+      // Pedido parcial detectado: no podemos completar de forma segura sin duplicar
+      // filas ya escritas (la hoja solo permite append). Se rechaza para que el
+      // cliente reintente con un orderId nuevo en vez de quedar silenciosamente incompleto.
+      console.error(`[createOrder] Pedido parcial detectado: ${orderId} tiene ${existingCount}/${items.length} filas. Rechazando para evitar guardarlo incompleto.`);
+      res.status(409);
+      throw new Error('Este pedido quedó incompleto por un problema anterior. Vuelve a enviarlo desde el carrito.');
+    }
+  }
+
   for (const item of items) {
     const row = [
       orderId,
@@ -71,6 +115,12 @@ export const createOrder = asyncHandler(async (req, res) => {
       item.imageUrl || ''  // Column P: Imagen_URL
     ];
     await appendSheetData('Pedidos!A:P', row);
+  }
+
+  if (orderId) {
+    const existingCounts = await getRecentOrderIdCounts();
+    existingCounts.set(orderId, items.length);
+    setCache(ORDER_IDS_CACHE_KEY, existingCounts, ORDER_IDS_CACHE_TTL);
   }
 
   res.status(201).json({ success: true, message: 'Order created successfully' });

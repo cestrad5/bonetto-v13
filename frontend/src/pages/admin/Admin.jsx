@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import { selectUser } from '../../redux/features/authSlice';
 import api from '../../services/api';
-import { RefreshCw, ClipboardList, Package, FileText, ChevronDown } from 'lucide-react';
+import { RefreshCw, FileText } from 'lucide-react';
 import DownloadPDFButton from '../../components/pdf/DownloadPDFButton';
 import { toast } from 'react-toastify';
 
@@ -16,9 +14,12 @@ const statusConfig = {
 };
 
 /* ── Stat chip ──────────────────────────────────────────────────────── */
+// El prop `soft` se recibía en cada llamado pero nunca se usaba adentro
+// (lint lo marcaba como no usado) — se conecta como fondo del ícono/chip
+// en vez de descartarlo.
 const Chip = ({ label, value, color, soft }) => (
   <div style={{
-    background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+    background: soft || '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
     padding: '18px 22px', boxShadow: 'var(--shadow-xs)',
   }}>
     <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
@@ -28,7 +29,6 @@ const Chip = ({ label, value, color, soft }) => (
 
 /* ── Main ───────────────────────────────────────────────────────────── */
 const Admin = () => {
-  const user = useSelector(selectUser);
   const [orders,   setOrders]   = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -124,6 +124,7 @@ const Admin = () => {
         <input
           className="input-field"
           placeholder="Buscar cliente, pedido o asesor…"
+          aria-label="Buscar cliente, pedido o asesor"
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{ maxWidth: '320px', padding: '9px 14px', fontSize: '0.88rem' }}
@@ -175,7 +176,14 @@ const Admin = () => {
                 {filtered.map((order, i) => {
                   const cfg = statusConfig[order.Estado] || statusConfig['Despachado'];
                   const itemsOfOrder = orders.filter(x => x.Pedido_ID === order.Pedido_ID);
-                  const total = itemsOfOrder.reduce((s, x) => s + (parseFloat(x.Subtotal) || 0), 0);
+                  const itemsTotal = itemsOfOrder.reduce((s, x) => s + (parseFloat(x.Subtotal) || 0), 0);
+                  // Igual que en Orders.jsx: preferir el total congelado del
+                  // pedido (Total_Pedido) sobre la suma de filas visibles.
+                  // Antes cada pantalla calculaba distinto y un mismo pedido
+                  // parcial mostraba dos totales diferentes según dónde se mirara.
+                  const storedTotal = parseFloat(order.Total_Pedido);
+                  const total = Number.isFinite(storedTotal) && storedTotal > 0 ? storedTotal : itemsTotal;
+                  const totalMismatch = Number.isFinite(storedTotal) && storedTotal > 0 && storedTotal !== itemsTotal;
 
                   return (
                     <tr key={order.Pedido_ID || i}>
@@ -189,8 +197,12 @@ const Admin = () => {
                       <td data-label="Fecha" style={{ color: 'var(--text-muted)', fontSize: '0.84rem' }}>
                         {order.Fecha ? new Date(order.Fecha).toLocaleDateString('es-CO') : '—'}
                       </td>
-                      <td data-label="Total" style={{ fontWeight: '700', color: 'var(--green)' }}>
-                        {total > 0 ? `$${total.toLocaleString('es-CO')}` : '—'}
+                      <td
+                        data-label="Total"
+                        style={{ fontWeight: '700', color: 'var(--green)' }}
+                        title={totalMismatch ? `Pedido incompleto: suma de ítems visibles ($${itemsTotal.toLocaleString('es-CO')}) no coincide con el total original` : undefined}
+                      >
+                        {total > 0 ? `$${total.toLocaleString('es-CO')}${totalMismatch ? ' ⚠️' : ''}` : '—'}
                       </td>
                       <td data-label="Estado">
                         <span style={{ padding: '4px 11px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: '600', background: cfg.bg, color: cfg.color, whiteSpace: 'nowrap' }}>
@@ -208,9 +220,10 @@ const Admin = () => {
                               onClick={handleDownload}
                               disabled={loading}
                               title="Descargar PDF"
+                              aria-label={`Descargar PDF del pedido ${order.Pedido_ID}`}
                               style={{
                                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                                width: '30px', height: '30px',
+                                width: '40px', height: '40px',
                                 background: 'var(--accent-soft)', border: '1.5px solid rgba(99,102,241,0.2)',
                                 borderRadius: 'var(--radius-sm)', color: 'var(--accent)', cursor: 'pointer',
                               }}

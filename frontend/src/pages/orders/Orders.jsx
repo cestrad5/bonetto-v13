@@ -1,15 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
-import { RefreshCw, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, FileText, WifiOff } from 'lucide-react';
 import DownloadPDFButton from '../../components/pdf/DownloadPDFButton';
 import { toast } from 'react-toastify';
+import { getPendingOrders, syncPendingOrders } from '../../services/offlineOrders';
 
 const STATUS_CONFIG = {
-  'Pendiente':     { bg: 'var(--amber-soft)',  text: '#d97706' },
-  'En Producción': { bg: 'var(--accent-soft)', text: 'var(--accent)' },
-  'Listo':         { bg: 'var(--green-soft)',  text: 'var(--green)' },
-  'Despachado':    { bg: '#f1f5f9',            text: 'var(--text-muted)' },
+  'Pendiente':                 { bg: 'var(--amber-soft)',  text: '#d97706' },
+  'En Producción':             { bg: 'var(--accent-soft)', text: 'var(--accent)' },
+  'Listo':                     { bg: 'var(--green-soft)',  text: 'var(--green)' },
+  'Despachado':                { bg: '#f1f5f9',            text: 'var(--text-muted)' },
+  'Pendiente de sincronizar':  { bg: 'var(--red-soft)',    text: 'var(--red)' },
 };
+
+const pendingOrderToRow = (p) => ({
+  Pedido_ID: p.orderId,
+  Cliente_Nombre: p.clientName,
+  Fecha: p.date,
+  Estado: 'Pendiente de sincronizar',
+  Nota: p.note,
+  Usuario_Email: p.userEmail,
+  _pending: true,
+  items: p.items.map((i) => ({
+    SKU: i.sku,
+    Producto_Nombre: i.name,
+    Qty: i.qty,
+    Precio_Final: i.priceFinal,
+    Subtotal: i.subtotal,
+    Imagen_URL: i.imageUrl,
+  })),
+});
 
 const Badge = ({ status }) => {
   const c = STATUS_CONFIG[status] || { bg: '#f1f5f9', text: 'var(--text-muted)' };
@@ -26,14 +46,27 @@ const Badge = ({ status }) => {
 /* ── Order expandable row ─────────────────────────────────────────── */
 const OrderRow = ({ order }) => {
   const [open, setOpen] = useState(false);
-  const total = order.items.reduce((s, i) => s + (parseFloat(i.Subtotal) || 0), 0);
+  // Preferir el total congelado guardado con el pedido: si faltan filas de ítems
+  // (p.ej. por un doble envío), la suma de ítems visibles sería menor al real.
+  const storedTotal = parseFloat(order.Total_Pedido);
+  const itemsTotal = order.items.reduce((s, i) => s + (parseFloat(i.Subtotal) || 0), 0);
+  const total = Number.isFinite(storedTotal) && storedTotal > 0 ? storedTotal : itemsTotal;
+  const totalMismatch = Number.isFinite(storedTotal) && storedTotal > 0 && storedTotal !== itemsTotal;
 
   return (
     <div className="order-card">
       {/* Header */}
       <div className="order-card-header">
-        <div className="order-card-info" onClick={() => setOpen(!open)}>
+        <div
+          className="order-card-info"
+          onClick={() => setOpen(!open)}
+          role="button"
+          tabIndex={0}
+          aria-expanded={open}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(!open); } }}
+        >
           <p className="order-card-client">
+            {order._pending && <WifiOff size={13} aria-label="Pendiente de sincronizar" style={{ marginRight: '5px', verticalAlign: '-1px', color: 'var(--red)' }} />}
             {order.Cliente_Nombre}
           </p>
           <p className="order-card-meta">
@@ -47,8 +80,8 @@ const OrderRow = ({ order }) => {
 
         <div className="order-card-status-price">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="order-card-total">
-              ${total.toLocaleString('es-CO')}
+            <span className="order-card-total" title={totalMismatch ? `Pedido incompleto: suma de ítems visibles ($${itemsTotal.toLocaleString('es-CO')}) no coincide con el total original` : undefined}>
+              ${total.toLocaleString('es-CO')}{totalMismatch ? ' ⚠️' : ''}
             </span>
             <Badge status={order.Estado} />
           </div>
@@ -80,7 +113,9 @@ const OrderRow = ({ order }) => {
 
             <button
               onClick={() => setOpen(!open)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', padding: '4px' }}
+              aria-label={open ? 'Ocultar detalle del pedido' : 'Ver detalle del pedido'}
+              aria-expanded={open}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', padding: '10px' }}
             >
               {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
@@ -121,7 +156,7 @@ const OrderRow = ({ order }) => {
           </div>
           {order.Nota && (
             <p style={{ padding: '10px 18px 14px', color: 'var(--text-muted)', fontSize: '0.82rem', borderTop: '1px solid var(--border)' }}>
-              📝 {order.Nota}
+              <span aria-hidden="true">📝</span> {order.Nota}
             </p>
           )}
         </div>
@@ -132,9 +167,10 @@ const OrderRow = ({ order }) => {
 
 /* ── Main ────────────────────────────────────────────────────────────── */
 const Orders = () => {
-  const [rawOrders, setRawOrders] = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [filter, setFilter]       = useState('Todos');
+  const [rawOrders, setRawOrders]   = useState([]);
+  const [pending, setPending]       = useState(getPendingOrders());
+  const [loading, setLoading]       = useState(true);
+  const [filter, setFilter]         = useState('Todos');
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -148,18 +184,45 @@ const Orders = () => {
     }
   };
 
-  useEffect(() => { fetchOrders(); }, []);
+  const trySync = async () => {
+    if (getPendingOrders().length === 0) return;
+    await syncPendingOrders();
+    setPending(getPendingOrders());
+    fetchOrders();
+  };
+
+  useEffect(() => {
+    fetchOrders();
+    trySync();
+    window.addEventListener('online', trySync);
+    return () => window.removeEventListener('online', trySync);
+    // Correr solo al montar: fetchOrders/trySync se redefinen en cada
+    // render y no dependen de props/estado externo al efecto.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* Group rows by Pedido_ID */
   const grouped = rawOrders.reduce((acc, row) => {
     const id = row.Pedido_ID;
-    if (!acc[id]) acc[id] = { Pedido_ID: id, Cliente_Nombre: row.Cliente_Nombre, Fecha: row.Fecha, Estado: row.Estado, Nota: row.Nota, Usuario_Email: row.Usuario_Email, items: [] };
+    if (!acc[id]) acc[id] = { Pedido_ID: id, Cliente_Nombre: row.Cliente_Nombre, Fecha: row.Fecha, Estado: row.Estado, Nota: row.Nota, Usuario_Email: row.Usuario_Email, Total_Pedido: row.Total_Pedido, items: [] };
     acc[id].items.push(row);
     return acc;
   }, {});
 
-  const orders   = Object.values(grouped).reverse();
-  const statuses = ['Todos', 'Pendiente', 'En Producción', 'Listo', 'Despachado'];
+  // Un pedido pendiente que ya se sincronizó pero sigue en `pending` (la
+  // sync todavía no terminó de limpiar la cola) puede aparecer también ya
+  // en `grouped` con el mismo Pedido_ID: sin este filtro, React se quejaba
+  // de keys duplicadas y la fila parpadeaba entre las dos versiones.
+  const pendingIds = new Set(pending.map(p => p.orderId));
+  const syncedOrders = Object.values(grouped).filter(o => !pendingIds.has(o.Pedido_ID));
+
+  // Antes se confiaba en el orden de filas de Sheets (Object.values().reverse());
+  // si alguna vez se reordenan filas en la hoja, "más recientes" dejaba de
+  // ser cierto. Ahora se ordena explícitamente por fecha descendente.
+  syncedOrders.sort((a, b) => new Date(b.Fecha || 0) - new Date(a.Fecha || 0));
+
+  const orders   = [...pending.map(pendingOrderToRow), ...syncedOrders];
+  const statuses = ['Todos', 'Pendiente de sincronizar', 'Pendiente', 'En Producción', 'Listo', 'Despachado'];
   const filtered = filter === 'Todos' ? orders : orders.filter(o => o.Estado === filter);
 
   return (
@@ -217,12 +280,12 @@ const Orders = () => {
       {/* List */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--text-muted)' }}>
-          <p style={{ fontSize: '1.8rem', marginBottom: '10px' }}>⏳</p>
+          <p aria-hidden="true" style={{ fontSize: '1.8rem', marginBottom: '10px' }}>⏳</p>
           <p>Cargando pedidos...</p>
         </div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--text-muted)' }}>
-          <p style={{ fontSize: '2.2rem', marginBottom: '10px' }}>📋</p>
+          <p aria-hidden="true" style={{ fontSize: '2.2rem', marginBottom: '10px' }}>📋</p>
           <p>No hay pedidos{filter !== 'Todos' ? ` con estado "${filter}"` : ''}.</p>
         </div>
       ) : (

@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { selectUser } from '../../redux/features/authSlice';
 import { selectCartItems } from '../../redux/features/cartSlice';
 import api from '../../services/api';
-import { ShoppingBag, ShoppingCart, ClipboardList, TrendingUp, Clock, FileText } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, ClipboardList, Clock, FileText } from 'lucide-react';
 import DownloadPDFButton from '../../components/pdf/DownloadPDFButton';
 import { toast } from 'react-toastify';
 
@@ -12,6 +12,10 @@ import { toast } from 'react-toastify';
 const StatCard = ({ icon, label, value, color, softColor, onClick }) => (
   <div
     onClick={onClick}
+    role={onClick ? 'button' : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onKeyDown={onClick ? (e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }) : undefined}
+    aria-label={onClick ? `${label}: ${value ?? '—'}` : undefined}
     style={{
       background: '#ffffff',
       border: '1px solid var(--border)',
@@ -81,7 +85,12 @@ const Dashboard = () => {
 
   const uniqueOrders  = [...new Map(orders.map(o => [o.Pedido_ID, o])).values()];
   const pending       = uniqueOrders.filter(o => o.Estado === 'Pendiente').length;
-  const recentOrders  = uniqueOrders.slice(-5).reverse();
+  // Antes: slice(-5).reverse() asumía que Sheets siempre devuelve las filas
+  // en orden cronológico. Se ordena explícito por fecha para que "recientes"
+  // sea recientes de verdad aunque se reordenen filas en la hoja.
+  const recentOrders  = [...uniqueOrders]
+    .sort((a, b) => new Date(b.Fecha || 0) - new Date(a.Fecha || 0))
+    .slice(0, 5);
 
   const greet = () => {
     const h = new Date().getHours();
@@ -95,7 +104,7 @@ const Dashboard = () => {
       {/* ── Welcome ── */}
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: '800', margin: 0, color: 'var(--text-main)', letterSpacing: '-0.03em' }}>
-          {greet()}, {user?.name?.split(' ')[0]} 👋
+          {greet()}, {user?.name?.split(' ')[0]} <span aria-hidden="true">👋</span>
         </h1>
         <p style={{ color: 'var(--text-muted)', marginTop: '5px', fontSize: '0.88rem' }}>
           {new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -203,9 +212,10 @@ const Dashboard = () => {
                           onClick={handleDownload}
                           disabled={pdfLoading}
                           title="Descargar PDF"
+                          aria-label={`Descargar PDF del pedido ${order.Pedido_ID}`}
                           style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            width: '32px', height: '32px',
+                            width: '40px', height: '40px',
                             background: 'var(--accent-soft)', border: '1.5px solid var(--accent-soft)',
                             borderRadius: 'var(--radius-sm)', color: 'var(--accent)',
                             cursor: 'pointer', transition: 'background 0.15s',

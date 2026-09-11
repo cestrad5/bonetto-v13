@@ -1,8 +1,8 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { LOGO_B64 } from './logoB64';
 
 // ─── URLs base ────────────────────────────────────────────────────────────────
-const LOGO_URL  = 'https://pedidos.bonettoconamor.com/logo.png';
 const PROXY_URL = 'https://pedidos.bonettoconamor.com/api/proxy-image?url=';
 
 /** Transforms an image URL into a usable src for @react-pdf:
@@ -127,9 +127,14 @@ const OrderPDF = ({ order }) => {
   const estado = safe(order?.Estado, 'Pendiente');
   const nota   = safe(order?.Nota || order?.Notas || order?.note);
 
-  const total = items.reduce(
+  // Usar el total congelado al momento del pedido (columna Total_Pedido) en vez de
+  // resumar los ítems: si el pedido quedó incompleto en la hoja (p.ej. doble envío
+  // que dividió los ítems en dos filas), el total mostrado sigue siendo el real.
+  const storedTotal = parseFloat(order?.Total_Pedido ?? order?.totalOrder ?? NaN);
+  const itemsTotal = items.reduce(
     (sum, i) => sum + (parseFloat(i.Subtotal ?? i.Total_Item ?? i.subtotal ?? 0) || 0), 0
   );
+  const total = Number.isFinite(storedTotal) && storedTotal > 0 ? storedTotal : itemsTotal;
 
   return (
     <Document title={`Pedido_${orderId}`}>
@@ -137,7 +142,7 @@ const OrderPDF = ({ order }) => {
 
         {/* ── Header con logo ── */}
         <View style={styles.header}>
-          <Image src={LOGO_URL} style={styles.logo} />
+          <Image src={LOGO_B64} style={styles.logo} />
           <View style={styles.orderBlock}>
             <Text style={styles.orderTitle}>PEDIDO #{orderId}</Text>
             <Text style={styles.orderMeta}>{fecha}</Text>

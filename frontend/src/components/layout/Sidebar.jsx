@@ -1,16 +1,36 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../../services/authService';
 import { SET_LOGIN, SET_USER, selectUser } from '../../redux/features/authSlice';
 import { selectCartItems } from '../../redux/features/cartSlice';
+import { getPendingCount, PENDING_ORDERS_CHANGED_EVENT } from '../../services/offlineOrders';
 import { LayoutDashboard, ShoppingBag, ShoppingCart, ClipboardList, LogOut, Settings } from 'lucide-react';
 
-const Sidebar = ({ onClose }) => {
+const Sidebar = ({ onClose, open = true }) => {
   const user = useSelector(selectUser);
   const cartItems = useSelector(selectCartItems);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [pendingCount, setPendingCount] = useState(getPendingCount());
+
+  useEffect(() => {
+    const update = () => setPendingCount(getPendingCount());
+    // Antes: setInterval cada 5s consultando localStorage sin parar, sin
+    // importar si algo cambió — gasto de batería permanente en mobile.
+    // Ahora es 100% dirigido por eventos: 'online' (volvió la conexión),
+    // 'storage' (otra pestaña cambió la cola) y el evento propio que
+    // offlineOrders.js dispara en la MISMA pestaña al guardar/sacar un
+    // pedido de la cola.
+    window.addEventListener('online', update);
+    window.addEventListener('storage', update);
+    window.addEventListener(PENDING_ORDERS_CHANGED_EVENT, update);
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('storage', update);
+      window.removeEventListener(PENDING_ORDERS_CHANGED_EVENT, update);
+    };
+  }, []);
 
   const cartCount = cartItems.reduce((sum, i) => sum + i.qty, 0);
 
@@ -34,7 +54,20 @@ const Sidebar = ({ onClose }) => {
         </span>
       ),
     },
-    { name: 'Mis Pedidos', path: '/orders', icon: <ClipboardList size={19} /> },
+    {
+      name: 'Mis Pedidos',
+      path: '/orders',
+      icon: (
+        <span className="cart-badge">
+          <ClipboardList size={19} />
+          {pendingCount > 0 && (
+            <span className="cart-badge-count" style={{ background: 'var(--red)' }} title={`${pendingCount} pedido(s) pendiente(s) de sincronizar`}>
+              {pendingCount}
+            </span>
+          )}
+        </span>
+      ),
+    },
   ].filter(item => {
     // Si es cliente, no ve el Dashboard
     if (user?.role?.trim().toLowerCase() === 'cliente' && item.name === 'Dashboard') return false;
@@ -46,7 +79,7 @@ const Sidebar = ({ onClose }) => {
   }
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar${open ? ' open' : ''}`}>
       {/* Logo / Brand */}
       <div style={{ marginBottom: '28px', padding: '4px 4px 0' }}>
         <img
