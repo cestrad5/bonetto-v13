@@ -6,6 +6,15 @@ services:
     build: ./backend
     restart: unless-stopped
     env_file: ./backend/.env
+    # service-account.json está en backend/.dockerignore a propósito (no debe
+    # quedar horneado en las capas de la imagen). Antes de eso, `COPY . .` en
+    # el Dockerfile lo copiaba igual porque estaba en disco sin excluirlo.
+    # Al excluirlo se rompió el arranque del backend en producción
+    # (ENOENT: no such file or directory, open './service-account.json') —
+    # se monta acá como volumen de solo lectura para que siga disponible en
+    # runtime sin viajar dentro de la imagen.
+    volumes:
+      - ./backend/service-account.json:/app/service-account.json:ro
     ports:
       - "5001:5001"
     networks:
