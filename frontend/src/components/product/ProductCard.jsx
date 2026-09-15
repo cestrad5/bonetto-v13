@@ -23,21 +23,18 @@ const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
     ? Math.round(((priceIVA - priceFinal) / priceIVA) * 100)
     : discountPct;
 
-  // Antes se podía armar el carrito entero sin cliente seleccionado o con
-  // stock 0, y el bloqueo recién aparecía al final en el carrito — el
-  // vendedor perdía todo el trabajo de armar el pedido para nada.
+  // Bonetto fabrica lo que vende: stock 0 NO significa "no se puede vender",
+  // significa "hay que fabricarlo". Bloquear el pedido ahí adentro le
+  // impedía al vendedor tomar pedidos legítimos de productos a fabricar.
+  // Se sigue mostrando el inventario como información (para que producción
+  // sepa qué hay y qué falta), pero ya no bloquea "Añadir".
   const stock = product.Inventario_Actual !== undefined && product.Inventario_Actual !== ''
     ? parseInt(product.Inventario_Actual, 10)
     : null;
-  const outOfStock = stock !== null && !isNaN(stock) && stock === 0;
 
   const handleAddToCart = () => {
     if (!selectedClient) {
       toast.warn('Selecciona un cliente antes de agregar productos');
-      return;
-    }
-    if (outOfStock) {
-      toast.error(`${product.Nombre} no tiene stock disponible`);
       return;
     }
     dispatch(ADD_TO_CART({
@@ -192,12 +189,13 @@ const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
           </p>
         )}
 
-        {/* Inventory — el color es un refuerzo visual, no la única señal:
-            el texto "Sin stock"/"Bajo"/cantidad ya lo dice sin depender del color. */}
+        {/* Inventory — informativo para producción, no bloquea la venta:
+            stock 0 quiere decir "se fabrica bajo pedido", no "no disponible".
+            El color es refuerzo visual, no la única señal: el texto ya lo dice. */}
         {stock !== null && (
-          <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: '600', color: isNaN(stock) || stock === 0 ? 'var(--red)' : stock <= 10 ? 'var(--amber)' : 'var(--green)' }}>
+          <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: '600', color: isNaN(stock) || stock <= 10 ? 'var(--amber)' : 'var(--green)' }}>
             <span aria-hidden="true">📦</span> Inventario: {isNaN(stock) ? product.Inventario_Actual : stock}
-            {stock === 0 ? ' (sin stock)' : stock > 0 && stock <= 10 ? ' (stock bajo)' : ''}
+            {stock === 0 ? ' (se fabrica a pedido)' : stock > 0 && stock <= 10 ? ' (stock bajo)' : ''}
           </p>
         )}
 
@@ -269,20 +267,19 @@ const ProductCard = ({ product, discountPct = 0, specialPrice = null }) => {
           {/* Add to cart */}
           <button
             onClick={handleAddToCart}
-            disabled={outOfStock}
             aria-label={`Añadir ${qty} unidad(es) de ${product.Nombre} al carrito`}
             style={{
               flex: 1, height: '40px', display: 'flex', alignItems: 'center',
               justifyContent: 'center', gap: '6px',
-              background: outOfStock ? 'var(--text-dim)' : 'var(--accent)', color: 'white', border: 'none',
+              background: 'var(--accent)', color: 'white', border: 'none',
               borderRadius: 'var(--radius)', fontWeight: '600', fontSize: '0.84rem',
-              cursor: outOfStock ? 'not-allowed' : 'pointer', transition: 'opacity 0.15s',
-              boxShadow: outOfStock ? 'none' : '0 2px 8px rgba(61,43,31,0.25)',
+              cursor: 'pointer', transition: 'opacity 0.15s',
+              boxShadow: '0 2px 8px rgba(61,43,31,0.25)',
             }}
-            onMouseEnter={e => { if (!outOfStock) e.currentTarget.style.opacity = '0.88'; }}
-            onMouseLeave={e => { if (!outOfStock) e.currentTarget.style.opacity = '1'; }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           >
-            <ShoppingCart size={15} /> {outOfStock ? 'Sin stock' : 'Añadir'}
+            <ShoppingCart size={15} /> Añadir
           </button>
         </div>
       </div>
